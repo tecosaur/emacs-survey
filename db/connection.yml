@@ -1,28 +1,16 @@
 env: ENV["GENIE_ENV"]
 
 dev:
-  adapter:
-  database:
-  host:
-  username:
-  password:
-  port:
+  adapter: SQLite
+  database: db/survey.sqlite
   config:
 
 prod:
   adapter:
   database:
-  host:
-  username:
-  password:
-  port:
   config:
 
 test:
   adapter:
   database:
-  host:
-  username:
-  password:
-  port:
   config:
