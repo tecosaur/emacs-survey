@@ -1,0 +1,57 @@
+// Config
+// --------------------
+
+// Enable <header>, <main>, <footer> inside <body> as a container
+$enable-semantic-container: true;
+
+// Enable .classes
+$enable-classes: true;
+
+// Custom theme
+$primary-500: #7F5AB6;
+$primary-600: #622486;
+$primary-700: #3E0C5C;
+
+// Pico Lib
+// --------------------
+
+// Config
+@import "pico/scss/variables";
+
+// Theming
+@import "pico/scss/themes/default";
+
+// Layout
+@import "pico/scss/layout/document"; // html
+@import "pico/scss/layout/sectioning"; // body, header, main, footer
+@import "pico/scss/layout/section"; // section
+@import "pico/scss/layout/grid"; // .grid
+@import "pico/scss/layout/scroller"; // figure
+
+// Content
+@import "pico/scss/content/typography"; // a, headings, p, ul, blockquote, ...
+@import "pico/scss/content/embedded"; // audio, canvas, iframe, img, svg, video
+@import "pico/scss/content/button"; // button, a[role=button], type=button, type=submit ...
+@import "pico/scss/content/form"; // input, select, textarea, label, fieldset, legend
+@import "pico/scss/content/form-checkbox-radio"; // type=checkbox, type=radio, role=switch
+@import "pico/scss/content/form-alt-input-types"; // type=color, type=date, type=file, type=search, ...
+@import "pico/scss/content/table"; // table, tr, td, ...
+@import "pico/scss/content/code"; // pre, code, ...
+@import "pico/scss/content/miscs"; // hr, template, [hidden], dialog, canvas
+
+// Components
+@import "pico/scss/components/accordion"; // details, summary
+@import "pico/scss/components/card"; // article
+// @import "pico/scss/components/nav"; // nav
+@import "pico/scss/components/progress"; // progress
+
+// Utilities
+@import "pico/scss/utilities/accessibility"; // -ms-touch-action, aria-*
+@import "pico/scss/utilities/reduce-motion"; // prefers-reduced-motion
+
+// Custom Extras
+@import "extras";
+
+// Local Variables:
+// eval: (add-hook 'after-save-hook (lambda () (start-process "sassc" nil "sassc" buffer-file-name (file-name-with-extension buffer-file-name "css"))) nil t)
+// End:

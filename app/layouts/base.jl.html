@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Emacs User Survey</title>
+        <link href="/css/style.css" rel="stylesheet">
+    </head>
+    <body>
+        <script>
+         // to prevent Firefox FOUC, this must be here
+         // see https://bugzilla.mozilla.org/show_bug.cgi?id=1404468
+         let FF_FOUC_FIX;
+        </script>
+
+        <%
+        @yield
+        %>
+
+        <footer>
+            This work is licensed under a
+            <a rel="license" href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0 License</a>
+        </footer>
+    </body>
+</html>
