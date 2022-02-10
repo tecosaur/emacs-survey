@@ -1801,3 +1801,29 @@ textarea,
 
 hr.strong {
   border: 0.125rem solid var(--primary); }
+
+[type="range"]::-moz-range-progress {
+  background-color: var(--primary);
+  border-radius: var(--border-radius);
+  height: 0.25rem; }
+  [type="range"]::-moz-range-progress:hover, [type="range"]::-moz-range-progress:focus {
+    background-color: var(--primary-hover); }
+
+[type="range"]::-moz-range-track, [type="range"]::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg, var(--background-color) 0.3em, var(--range-border-color) 0px);
+  background-size: calc(100% / var(--stops)) 100%; }
+
+[type="text"].other {
+  width: auto !important;
+  margin: 0;
+  padding: 0 0.5rem !important;
+  height: calc(1.4rem * var(--line-height)) !important;
+  transform: translate(0em, 0.4em); }
+
+output {
+  display: inline-block;
+  vertical-align: top;
+  color: var(--primary);
+  font-weight: 600;
+  float: right;
+  transform: translate(0em, calc(var(--spacing) * 0.15)); }

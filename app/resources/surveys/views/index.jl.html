@@ -1,0 +1,33 @@
+<header>
+    <hgroup>
+        <h1>$(survey.name)</h1>
+        <% if !isnothing(survey.description) %>
+        <h2>$(survey.description)</h2>
+        <% else %>
+        <br />
+        <% end %>
+    </hgroup>
+</header>
+
+<% if isnothing(responseid) %>
+<main>
+    <form method="get" action="/survey">
+        <button type="submit">Take the survey</button>
+    </form>
+</main>
+<% else %>
+<main>
+    <form method="get" action="/survey">
+        <div class="grid">
+            <input type="text" name="uid" value="$(responseid)"
+                   placeholder="Response ID" style ="font-family:monospace"/>
+            <button type="submit">Resume survey</button>
+        </div>
+    </form>
+    <hr /> <br />
+    <form method="get" action="/survey">
+        <input type="hidden" name="clear" value="$(responseid)" />
+        <button id="do-btn" type="submit" class="secondary">Start a new response</button>
+    </form>
+</main>
+<% end %>

@@ -1,0 +1,51 @@
+<style>
+ svg > g > rect {
+     color: var(--primary);
+ }
+ svg > g > rect:hover {
+     color: var(--primary-hover);
+ }
+ svg > g > text {
+     font-size: 2pt;
+     font-weight: 500;
+ }
+</style>
+
+<header>
+    <hgroup>
+        <h1>$(name)</h1>
+        <span>
+            <strong>$(size(sresults, 1)) results also available as</strong>
+            <a href="$(id).txt" target="_blank">Text</a>,
+            <a href="$(id).csv" target="_blank">CSV</a>,
+            <a href="$(id).tsv" target="_blank">TSV</a>,
+            <a href="$(id).json" target="_blank">JSON</a>,
+            <a href="$(id).db" target="_blank">SQLite DB</a>
+        </span>
+    </hgroup>
+</header>
+
+<main>
+    <% [ %>
+    <details>
+        <summary>
+            $(question[:prompt])
+            <small><code>$(question[:type])</code></small>
+        </summary>
+        <% let qres=filter(!ismissing, sresults[!, qid])
+             if length(qres) > 0
+               let qresexpanded=if qres[1] isa Vector; collect(Iterators.flatten(qres)) else qres end
+                   qresfreq=sort(countmap(qresexpanded) |> collect, by=x->-x[2])
+                   maxfreq=qresfreq[1][2] %>
+        <svg viewBox="0 0 130 $(6*length(qresfreq))">
+            <% [ %>
+            <g class="bar">
+                <rect width="$(100*res[2]/maxfreq)" height="4" y="$(6*(i-1))"></rect>
+                <text x="$(5+100*res[2]/maxfreq)" y="$(3+6*(i-1))" dy=".05em">$(res[1])</text>
+            </g>
+            <% for (i, res) in enumerate(qresfreq)] |> join %>
+        </svg>
+        <% end end end %>
+    </details>
+    <% for (qid, question) in questions(id)] |> join %>
+</main>

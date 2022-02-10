@@ -1,0 +1,57 @@
+<style>
+ label[data-mandatory="true"] > span::after,
+ legend[data-mandatory="true"]::after
+ {
+     content: ' *';
+     color: var(--del-color);
+     opacity: 0.8;
+ }
+ small.formerror {
+     margin-bottom: 0;
+     color: var(--del-color);
+ }
+</style>
+
+<header>
+    <hgroup>
+        <h1>$(survey.name)</h1>
+        <h2>Survey Attempt ID
+            <code style="color:var(--primary)">$(uid)</code>
+            <% if length(survey) > 1 %>
+            <span style="float:right">
+                Page $(page) / $(length(survey))
+            </span>
+            <% end %>
+        </h2>
+    </hgroup>
+    <progress value="$(page)" max="$(length(survey))">
+</header>
+
+<main>
+    <% if !isnothing(survey[page].label) %>
+    <h2>$(survey[page].label)</h2>
+    <% end %>
+    <form method="POST" action="/submit" enctype="application/x-www-form-urlencoded" novalidate>
+        <section>
+            <input type="hidden" name="uid" value="$(uid)" />
+            <input type="hidden" name="page" value="$(page)" />
+            $(sprint(show, MIME("text/html"), survey[page] => response))
+        </section>
+        <% if page > 1 %>
+        <div class="grid">
+            <button class="secondary" type="submit" formaction="/submit-backpage" formnovalidate="true">Previous page</button>
+            <button type="submit" style="grid-column: span 2">$(cta = if page < length(survey); "Next page" else "Submit" end)</button>
+        </div>
+        <% else %>
+        <button type="submit">$(cta = if page < length(survey); "Next page" else "Submit" end)</button>
+        <% end %>
+        <hr /> <br />
+        <input type="hidden" name="debug" value="no" />
+        <small>
+            <label for="qn-debug">
+                <input type="checkbox" id="qn-debug" name="debug" role="switch" value="yes">
+                Debug
+            </label>
+        </small>
+    </form>
+</main>

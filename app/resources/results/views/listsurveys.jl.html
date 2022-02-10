@@ -1,0 +1,25 @@
+<header>
+    <h1>Recorded Surveys</h1>
+</header>
+
+<main>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>ID</th>
+                <th>Questions</th>
+                <th>Responses</th>
+            </tr>
+        </thead>
+        <tbody>
+            <%
+            [tr(string(td(a(name, href=string("/results/", id))),
+                       td(code(string(id))),
+                       td(string(length(questions(id)))),
+                       td(string(length(responseids(id))))))
+             for (id, name) in surveys()] |> join
+            %>
+        </tbody>
+    </table>
+</main>
