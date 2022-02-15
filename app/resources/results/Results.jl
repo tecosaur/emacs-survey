@@ -58,10 +58,10 @@ function responseids(survey::SurveyID, type::Symbol; cache::Bool=true)
     if type == :all
         responseids(surveyid; cache)
     elseif type == :complete
-        SearchLight.query("SELECT id FROM responses WHERE completed IS NOT NULL") |>
+        SearchLight.query("SELECT id FROM responses WHERE survey=$survey AND completed IS NOT NULL") |>
             r -> ResponseID.(r.id)
     elseif type == :incomplete
-        SearchLight.query("SELECT id FROM responses WHERE completed IS NULL") |>
+        SearchLight.query("SELECT id FROM responses WHERE survey=$survey AND completed IS NULL") |>
             r -> ResponseID.(r.id)
     end
 end
