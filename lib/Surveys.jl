@@ -344,11 +344,11 @@ isvalid(r::Response, s::Survey) =
 # General htmlrenderer
 # ---------------------
 
-htmlcontent(::FormField, value) = ""
-htmlelement(::FormField) = "?"
-htmlattrs(::FormField, value) = []
-htmlvoidelem(::FormField) = false
-htmlpostprocess(::FormField, ::Symbol) = identity
+html_content(::FormField, value) = ""
+html_element(::FormField) = "?"
+html_attrs(::FormField, value) = []
+html_voidelem(::FormField) = false
+html_postprocess(::FormField, ::Symbol) = identity
 
 elem(e::AbstractString, content::AbstractString="", attrs::Pair{Symbol,<:Any}...) =
     Html.normal_element(content, e, [], attrs...)
@@ -357,20 +357,28 @@ elem(e::AbstractString, attrs::Pair{Symbol,<:Any}...) = elem(e, "", attrs...)
 velem(e::AbstractString, attrs::Pair{Symbol,<:Any}...) =
     Html.void_element(e, [], Vector{Pair{Symbol,Any}}(collect(attrs)))
 
+const html_escape_characters =
+    Dict('"' => "&quot;",
+         '&' => "&amp;",
+         '<' => "&lt;",
+         '>' => "&gt;")
+html_escape(s::String) = replace(s, r"\"|&|<|>" => c -> html_escape_characters[c[1]])
+html_escape(::Missing) = ""
+
 function htmlrender(field::FormField, value::Any, id, mandatory, invalid)
-    element = htmlelement(field)
-    attrs = vcat(htmlattrs(field, value),
+    element = html_element(field)
+    attrs = vcat(html_attrs(field, value),
                  [:id => string("qn-", id),
                   :name => id,
                   Symbol("aria-invalid") => invalid,
                   :required => mandatory && !isa(field, Checkbox)])
-    if htmlvoidelem(field)
+    if html_voidelem(field)
         velem(element, attrs...)
     else
-        content = htmlcontent(field, value)
+        content = html_content(field, value)
         elem(element, if ismissing(content) "" else string(content) end,
              attrs...)
-    end |> htmlpostprocess(field, id)
+    end |> html_postprocess(field, id)
 end
 
 # ---------------------
@@ -388,28 +396,28 @@ struct FormInput{T} <: FormField{T}
         end
 end
 
-htmlelement(::FormInput) = "input"
-htmlvoidelem(::FormInput) = true
-htmlattrs(::FormInput, value) =
-    [:value => if ismissing(value) false else string(value) end]
+html_element(::FormInput) = "input"
+html_voidelem(::FormInput) = true
+html_attrs(::FormInput, value) =
+    [:value => if ismissing(value) false else html_escape(string(value)) end]
 
 # <input type="checkbox">
 
 interpret(::FormInput{Bool}, value::AbstractString) = value == "yes"
-htmlattrs(::FormInput{Bool}, value::Union{Bool, Missing}) =
+html_attrs(::FormInput{Bool}, value::Union{Bool, Missing}) =
     [:type => "checkbox", :value => "yes", :checked => !ismissing(value) && value === true]
-htmlpostprocess(::FormInput{Bool}, id::Symbol) =
+html_postprocess(::FormInput{Bool}, id::Symbol) =
     s -> string(input(type="hidden", name=id, value="no"), s)
 
 # <input type="date|number|text">
 
-function htmlattrs(::FormInput{T}, value) where {T <: Union{Date, Number, Integer, String}}
+function html_attrs(::FormInput{T}, value) where {T <: Union{Date, Number, Integer, String}}
     type = Dict(Date => "date",
                 Number => "number",
                 Integer => "number",
                 String => "text")[T]
     [:type => type,
-     :value => if ismissing(value) false else string(value) end]
+     :value => if ismissing(value) false else html_escape(string(value)) end]
 end
 
 const Checkbox = FormInput{Bool}
@@ -426,8 +434,8 @@ struct TextArea <: FormField{String} end
 
 default_validators(::TextArea) = Function[wordlimit(500), charlimit(2500)]
 
-htmlelement(::TextArea) = "textarea"
-htmlcontent(::TextArea, value) = value
+html_element(::TextArea) = "textarea"
+html_content(::TextArea, value) = html_escape(value)
 
 # <select>
 
@@ -450,8 +458,8 @@ Dropdown(opts::Union{Vector{String}, Vector{Pair{String, String}}}) =
 Dropdown(gopts::Vector{Pair{String, Vector}}) =
     Dropdown([OptGroup(gopt) for gopt in gopts])
 
-htmlelement(::Dropdown) = "select"
-function htmlcontent(d::Dropdown{Options}, value)
+html_element(::Dropdown) = "select"
+function html_content(d::Dropdown{Options}, value)
     string(option("Select one", value="", selected=ismissing(value),
                   disabled=true, hidden=true), '\n',
            map(opt -> option(opt.second, value=opt.first,
@@ -459,7 +467,7 @@ function htmlcontent(d::Dropdown{Options}, value)
                d.options.options)...)
 end
 
-function htmlcontent(d::Dropdown{Vector{OptGroup}}, value)
+function html_content(d::Dropdown{Vector{OptGroup}}, value)
     string(option("Select one", value="", selected=ismissing(value),
                   disabled=true, hidden=true),
            map(d.options) do optgroup
@@ -540,7 +548,7 @@ function htmlrender(q::Union{<:Question{RadioSelect}, Question{MultiSelect}},
                 id = string("qn-", q.id, "-", opt.second)
                 elem("label",
                     elem("input", :type => type, :id => id,
-                        :name => string(q.id, "[]"), :value => opt.second,
+                        :name => string(q.id, "[]"), :value => html_escape(opt.second),
                         :checked => (!ismissing(value) && opt.second ∈ value),
                         if type == "radio" && q.field.other
                             [:oninput => "document.getElementById('$(string("qn-", q.id, "--other-input"))').value = ''"]
@@ -566,7 +574,7 @@ function htmlrender(q::Union{<:Question{RadioSelect}, Question{MultiSelect}},
                     elem("input", :type => "text",
                         :id => string("qn-", q.id, "--other-input"),
                         :class => "other", :placeholder => "Other",
-                        :name => string(q.id, "[]"), :value => join(othervals, ", "),
+                        :name => string(q.id, "[]"), :value => html_escape(join(othervals, ", ")),
                         :oninput => "document.getElementById('$(string("qn-", q.id, "--other"))').checked = this.value.length > 0"
                     )),
                 :for => string("qn-", q.id, "--other"))
@@ -581,15 +589,15 @@ end
 
 RangeSelect(r::UnitRange{<:Number}) = RangeSelect(StepRange(r.start, 1, r.stop))
 
-htmlelement(::RangeSelect) = "input"
-htmlvoidelem(::RangeSelect) = true
-htmlattrs(r::RangeSelect, value) =
+html_element(::RangeSelect) = "input"
+html_voidelem(::RangeSelect) = true
+html_attrs(r::RangeSelect, value) =
     [:type => "range",
      :min => r.values.start, :max => r.values.stop,
      :step => r.values.step, :style => "--stops: $(length(r.values)-1); width: calc(100% - 3em)",
      :oninput => "results$(hash(r)).value = this.value",
-     :value => if ismissing(value) false else string(value) end]
-htmlpostprocess(r::RangeSelect, id::Symbol) =
+     :value => if ismissing(value) false else html_escape(string(value)) end]
+html_postprocess(r::RangeSelect, id::Symbol) =
     s -> string(s, '\n', output(name="results$(hash(r))"), '\n',
                 script("""let r = document.getElementById("qn-$id")
 let o = document.getElementsByName("results$(hash(r))")[0]
@@ -679,7 +687,7 @@ end
 show(io::IO, qa::Pair{<:Question, <:Answer}) = show(io, MIME("text/plain"), qa)
 
 function show(io::IO, m::MIME"text/plain", part::SurveyPart)
-    printstyled("  -- ", if isnothing(part.label)
+    printstyled(io, "  -- ", if isnothing(part.label)
                     "Unlabeled part"
                 else part.label end, " --\n", color=:yellow)
     for q in part.questions
@@ -690,7 +698,7 @@ end
 
 function show(io::IO, m::MIME"text/plain", pr::Pair{SurveyPart, Response})
     part, response = pr
-    printstyled("  -- ", if isnothing(part.label)
+    printstyled(io, "  -- ", if isnothing(part.label)
                     "Unlabeled part"
                 else part.label end, " --\n", color=:yellow)
     foreach(part.questions) do q
