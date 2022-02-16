@@ -5,7 +5,8 @@ using Genie.Renderers.Html
 import Base: show, isvalid, isempty
 
 export Survey, SurveyPart, Question,
-    Answer, Response, update!, clear!, nonempty,
+    Answer, Response, update!, clear!,
+    nonempty, wordlimit, charlimit,
     SurveyID, ResponseID,
     Checkbox, TextInput, DateInput, NumberInput, IntegerInput,
     TextArea, Dropdown, RadioSelect, MultiSelect, RangeSelect
@@ -50,19 +51,47 @@ function nonempty(values::Vector{<:AbstractString})
 end
 
 nonempty(::Bool) = nothing
+nonempty(::Number) = nothing
+nonempty(::Date) = nothing
 
-lastsoftfail(v::Vector) = if length(v) > 0
-    last(v)
-else
-    ""
+lastsoftfail(v::Vector) =
+    if length(v) > 0
+        last(v)
+    else "" end
+
+wordlimit(min::Int, max::Int) = function(text::AbstractString)
+    wordcount = length(split(text))
+    if wordcount < min
+        string("Need at least ", min, if min > 1 " words" else " word" end,
+               " (currently ", wordcount, ")")
+    elseif wordcount > max
+        string("No more than ", max, if max > 1 " words" else " word" end,
+               " are permitted (currently ", wordcount, ")")
+    end
 end
+wordlimit(max::Int) = wordlimit(0, max)
 
-defaultpostprocessors(::FormField) = Function[last, strip]
+charlimit(min::Int, max::Int) = function(text::AbstractString)
+    charcount = length(split(text))
+    if charcount < min
+        string("Need at least ", min, if min > 1 " characters" else " character" end,
+               " (currently ", charcount, ")")
+    elseif charcount > max
+        string("No more than ", max, if max > 1 " characters" else " character" end,
+               " are permitted (currently ", charcount, ")")
+    end
+end
+charlimit(max::Int) = charlimit(0, max)
+
+default_postprocessors(::FormField) = Function[last, strip]
+default_validators(::FormField) = Function[]
 
 function Question(id::Symbol, prompt::AbstractString, field::FormField;
-                  validators::Union{Function, Vector{<:Function}}=Function[],
-                  postprocessors::Union{Function, Vector{<:Function}}=defaultpostprocessors(field),
-                  mandatory::Bool=true)
+                  postprocessors::Union{Function, Vector{<:Function}} =
+                      default_postprocessors(field),
+                  validators::Union{Function, Vector{<:Function}} =
+                      default_validators(field),
+                  mandatory::Bool = true)
     fullvalidators = if mandatory
         vcat(nonempty, validators)
     else
@@ -73,10 +102,10 @@ end
 
 function prompttoid(prompt::String)
     prompt |>
-        p -> replace(p, r"[^A-Za-z0-9\s]" => "") |>
-        p -> replace(p, r"\s+" => "_") |>
-        lowercase |>
-        Symbol
+    p -> replace(p, r"[^A-Za-z0-9\s]" => "") |>
+         p -> replace(p, r"\s+" => "_") |>
+              lowercase |>
+              Symbol
 end
 
 Question(prompt::AbstractString, field::FormField; kargs...) =
@@ -84,11 +113,17 @@ Question(prompt::AbstractString, field::FormField; kargs...) =
 
 # Field-based question constructors
 
-function (F::Type{<:FormField})(id::Symbol, prompt::AbstractString, args...;
-                                validators::Union{Function, Vector{<:Function}}=Function[],
-                                mandatory::Bool=true,
-                                kwargs...)
-    Question(id, prompt, F(args...; kwargs...); validators, mandatory)
+function (F::Type{<:FormField})(id::Symbol, prompt::AbstractString,
+                                args...; kwargs...)
+    question_extra_kwargs = (:postprocessors, :validators, :mandatory)
+    question_kwargs = filter(kw -> kw.first ∈ question_extra_kwargs, kwargs)
+    field_kwargs = filter(kw -> kw.first ∉ question_extra_kwargs, kwargs)
+    try
+        Question(id, prompt, F(args...; field_kwargs...); question_kwargs...)
+    catch e
+        print(stderr, "\nError while processing question $id\n")
+        rethrow(e)
+    end
 end
 function (F::Type{<:FormField})(prompt::AbstractString, args...; kwargs...)
     F(prompttoid(prompt), prompt, args...; kwargs...)
@@ -120,6 +155,24 @@ struct Survey
     description::Union{AbstractString, Nothing}
     parts::Vector{Pair{Union{AbstractString, Nothing}, Vector{Symbol}}}
     questions::Dict{Symbol, Question}
+    function Survey(name::AbstractString,
+        description::Union{AbstractString, Nothing},
+        parts::Vector{<:Pair{<:Union{<:AbstractString, Nothing}, <:Vector{Symbol}}},
+        questions::Dict{Symbol, Question})
+        # Create an id that only depends on:
+        # 1. Question IDs
+        # 2. Question field types
+        # These are the two essential components to hash, as the database interactions
+        # rely on the assumption that these two components are stable.
+        # Hopefully memhashing a Tuple of Symbols and Strings is somewhat stable,
+        # I checked this on Julia 1.3 and 1.6 and it looked alright.
+        function qhash(q::Question{<:FormField{T}}) where {T}
+            hash((q.id, string(T)))
+        end
+        id = xor(map(qhash, values(questions))...) |>
+             h -> xor(reinterpret(SurveyID, [h])...)
+        new(id, name, description, parts, questions)
+    end
 end
 
 Base.getindex(s::Survey, id::Symbol) = s.questions[id]
@@ -128,23 +181,6 @@ Base.getindex(s::Survey, part::Integer) =
                getindex.(Ref(s.questions), s.parts[part].second))
 
 Base.length(s::Survey) = length(s.parts)
-
-function Survey(name::AbstractString,
-                description::Union{AbstractString, Nothing},
-                parts::Vector{<:Pair{<:Union{<:AbstractString, Nothing}, <:Vector{Symbol}}},
-                questions::Dict{Symbol, Question})
-    # Create an id that only depends on:
-    # 1. Question IDs
-    # 2. Question Prompts
-    # 3. Question field types
-    # Hopefully memhashing a Tuple of Symbols and Strings is somewhat stable,
-    # I checked this on Julia 1.3 and 1.6 and it looked alright.
-    id = xor(map(values(questions)) do q
-                 hash((q.id, q.prompt, string(typeof(q.field))))
-             end...) |>
-                 h -> xor(reinterpret(SurveyID, [h])...)
-    Survey(id, name, description, parts, questions)
-end
 
 Survey(name::AbstractString,
        description::Union{AbstractString, Nothing},
@@ -214,30 +250,54 @@ function Response(s::Survey, oldids::Vector{ResponseID})
 end
 
 interpret(::FormField{<:AbstractString}, value::AbstractString) = value
+interpret(::FormField{Integer}, value::AbstractString) = parse(Int64, value)
+default_validators(::FormField{Integer}) = function(unparseable::String)
+    "Integer required. \"$unparseable\" could not be parsed as an integer."
+end
 interpret(::FormField{Number}, value::AbstractString) =
     something(tryparse(Int64, value), parse(Float64, value))
+default_validators(::FormField{Number}) = function(unparseable::String)
+    "Number required. \"$unparseable\" could not be parsed as a number."
+end
 interpret(::FormField{T}, value::AbstractString) where {T} = parse(T, value)
 
 # Response interpretation
 
-function Answer(q::Question{<:FormField{T}}, value::Union{String, Vector{String}}) where {T}
+function Answer(q::Question{<:FormField{T}}, value::Vector{String}) where {T}
     try
         processedvalue = interpret(q.field, ∘(identity, reverse(q.postprocessors)...)(value))
         error = nothing
         for validator in q.validators
-            error = validator(processedvalue)
+            if applicable(validator, processedvalue)
+                error = validator(processedvalue)
+            end
             isnothing(error) || break
         end
         Answer{T}(processedvalue, error)
     catch e
-        @warn "Answer construction failure" exception=(e, catch_backtrace())
-        Answer{T}(missing, first(split(sprint(showerror, e), '\n')))
+        construction_error = nothing
+        try
+            for validator in q.validators
+                if hasmethod(validator, Tuple{String})
+                    construction_error = validator(last(value))
+                elseif hasmethod(validator, Tuple{Vector{String}})
+                    construction_error = validator(value)
+                end
+                isnothing(construction_error) || break
+            end
+        catch _
+        end
+        if isnothing(construction_error)
+            @warn "Answer construction failure" exception = (e, catch_backtrace())
+            construction_error = first(split(sprint(showerror, e), '\n'))
+        end
+        Answer{T}(missing, construction_error)
     end
 end
 
 function Answer(q::Question{<:FormField{T}}, ::Missing) where {T}
     if nonempty in q.validators
-        Answer{T}(missing, "Must be answered")
+        Answer{T}(missing, nonempty(""))
     else
         Answer{T}(missing, nothing)
     end
@@ -358,9 +418,14 @@ const DateInput = FormInput{Date}
 const NumberInput = FormInput{Number}
 const IntegerInput = FormInput{Integer}
 
+default_validators(::TextInput) = Function[wordlimit(100), charlimit(500)]
+
 # <textarea>
 
 struct TextArea <: FormField{String} end
+
+default_validators(::TextArea) = Function[wordlimit(500), charlimit(2500)]
+
 htmlelement(::TextArea) = "textarea"
 htmlcontent(::TextArea, value) = value
 
@@ -428,16 +493,36 @@ end
 
 # Many <input type="radio|checkbox">
 
-function (F::Type{<:Union{RadioSelect, MultiSelect}})(opts::Vector)
-    nosymbol = filter(o -> o isa String || o isa Pair{String, String}, opts)
+function (F::Type{<:Union{RadioSelect,MultiSelect}})(opts::Vector{T}) where {T}
+    if T == Any
+        try
+            if Pair{String,String} in typeof.(opts)
+                opts = map(opts) do o
+                    if o isa String
+                        o => o
+                    else
+                        o
+                    end
+                end |> Vector{Union{Pair{String,String},Symbol}}
+            else
+                opts = Vector{Union{String,Symbol}}(opts)
+            end
+        catch e
+            @error "Could not coerce Vector{$T} to a Vector{Union{String, Pair{String, String}, Symbol}}"
+            rethrow(e)
+        end
+    end
+    nosymbol = filter(o -> o isa String || o isa Pair{String,String}, opts)
     F(Options(Vector{typeof(first(nosymbol))}(nosymbol)), :other in opts)
 end
 
 interpret(::FormField{Vector{String}}, value::Vector{<:AbstractString}) =
     value
 
-defaultpostprocessors(::MultiSelect) = Function[s -> filter(!isempty, strip.(s))]
-defaultpostprocessors(::RadioSelect) = Function[s -> filter(!isempty, strip.(s)), last]
+default_postprocessors(::MultiSelect) =
+    Function[s -> filter(!isempty, strip.(s))]
+default_postprocessors(::RadioSelect) =
+    Function[s -> filter(!isempty, strip.(s)), last]
 
 # Render many <input type="radio|checkbox">
 
@@ -448,41 +533,44 @@ function htmlrender(q::Union{<:Question{RadioSelect}, Question{MultiSelect}},
     end
     type = if q isa Question{RadioSelect} "radio" else "checkbox" end
     string(elem("legend", q.prompt,
-                Symbol("data-mandatory") =>
-                    if nonempty in q.validators "true" else false end),
-           '\n',
-           join(map(q.field.options.options |> enumerate) do (i, opt)
-                    id = string("qn-", q.id, "-", opt.first)
-                    elem("label",
-                         elem("input", :type => type, :id => id,
-                              :name => string(q.id, "[]"), :value => opt.first,
-                              :checked => (!ismissing(value) && opt.first ∈ value),
-                              if q.field.other
-                                  [:oninput => "document.getElementById('$(string("qn-", q.id, "--other-input"))').value = ''"]
-                              else [] end...) *
-                                  opt.second,
-                         :for => id)
-                end, '\n'),
-           if q.field.other
-               othervals = if !ismissing(value)
-                   filter(v -> v ∉ getfield.(q.field.options.options, :first), value)
-               else
-                   []
-               end
-               '\n' *
-                   elem("label",
-                        string(
-                            elem("input", :type => type, :name => if type == "radio" string(q.id, "[]") else "" end,
-                                 :id => string("qn-", q.id, "--other"), :value => "",
-                                 :checked => length(othervals) > 0),
-                            elem("input", :type => "text",
-                                 :id => string("qn-", q.id, "--other-input"),
-                                 :class => "other", :placeholder => "Other",
-                                 :name => string(q.id, "[]"), :value => join(othervals, ", "),
-                                 :oninput => "document.getElementById('$(string("qn-", q.id, "--other"))').checked = this.value.length > 0"
-                                 )),
-                        :for => string("qn-", q.id, "--other"))
-           else "" end) |> fieldset
+            Symbol("data-mandatory") =>
+                if nonempty in q.validators "true" else false end),
+        '\n',
+        join(map(q.field.options.options |> enumerate) do (i, opt)
+                id = string("qn-", q.id, "-", opt.second)
+                elem("label",
+                    elem("input", :type => type, :id => id,
+                        :name => string(q.id, "[]"), :value => opt.second,
+                        :checked => (!ismissing(value) && opt.second ∈ value),
+                        if type == "radio" && q.field.other
+                            [:oninput => "document.getElementById('$(string("qn-", q.id, "--other-input"))').value = ''"]
+                        else [] end...) *
+                    opt.first,
+                    :for => id)
+            end, '\n'),
+        if q.field.other
+            othervals = if !ismissing(value)
+                filter(v -> v ∉ getfield.(q.field.options.options, :second), value)
+            else [] end
+            '\n' *
+            elem("label",
+                string(
+                    elem("input", :type => type, :name => if type == "radio"
+                            string(q.id, "[]")
+                        else "" end,
+                        :id => string("qn-", q.id, "--other"), :value => "",
+                        :checked => length(othervals) > 0,
+                         if type == "checkbox"
+                            [:oninput => "if (!this.checked) { document.getElementById('$(string("qn-", q.id, "--other-input"))').value = '' }"]
+                         else [] end...),
+                    elem("input", :type => "text",
+                        :id => string("qn-", q.id, "--other-input"),
+                        :class => "other", :placeholder => "Other",
+                        :name => string(q.id, "[]"), :value => join(othervals, ", "),
+                        :oninput => "document.getElementById('$(string("qn-", q.id, "--other"))').checked = this.value.length > 0"
+                    )),
+                :for => string("qn-", q.id, "--other"))
+        else "" end) |> fieldset
 end
 
 # <input type="range">
@@ -591,6 +679,9 @@ end
 show(io::IO, qa::Pair{<:Question, <:Answer}) = show(io, MIME("text/plain"), qa)
 
 function show(io::IO, m::MIME"text/plain", part::SurveyPart)
+    printstyled("  -- ", if isnothing(part.label)
+                    "Unlabeled part"
+                else part.label end, " --\n", color=:yellow)
     for q in part.questions
         show(io, m, q)
         q === last(part.questions) || print(io, "\n")
@@ -599,9 +690,12 @@ end
 
 function show(io::IO, m::MIME"text/plain", pr::Pair{SurveyPart, Response})
     part, response = pr
+    printstyled("  -- ", if isnothing(part.label)
+                    "Unlabeled part"
+                else part.label end, " --\n", color=:yellow)
     foreach(part.questions) do q
         show(io, m, q => response[q.id])
-        last(part.questions) === q || print(io, "\n\n")
+        last(part.questions) === q || print(io, '\n')
     end
 end
 show(io::IO, pr::Pair{SurveyPart, Response}) = show(io, MIME("text/plain"), pr)
@@ -611,7 +705,7 @@ function show(io::IO, m::MIME"text/plain", s::Survey)
     parts = [s[p] for p in 1:length(s)]
     for part in parts
         show(io, m, part)
-        part === last(parts) || printstyled(io, "\n  ---\n", color=:yellow)
+        part === last(parts) || print(io, '\n')
     end
 end
 
