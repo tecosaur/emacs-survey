@@ -754,4 +754,52 @@ function show(io::IO, m::MIME"text/plain", r::Response)
     show(io, m, r.answers)
 end
 
+# ---------------------
+# Survey Renderer (Org)
+# ---------------------
+
+function show(io::IO, ::MIME"text/org", q::Question{T}) where {T}
+    printstyled(io, "** ", q.prompt, bold=true, color=:blue)
+    printstyled(io, " :", string(T), ":", color=:light_black)
+    if nonempty in q.validators
+        printstyled(io, "Mandatory:", color=:light_black)
+    end
+    print(io, '\n')
+    if hasfield(T, :options)
+        for option in q.field.options.options
+            println(io, "- [ ] ", first(option))
+        end
+        if hasfield(T, :other) && q.field.other
+            println(io, "- [ ] *other*")
+        end
+    end
+end
+
+function show(io::IO, m::MIME"text/org", part::SurveyPart)
+    printstyled(io, "* ", if isnothing(part.label)
+                    "Unlabeled part"
+                else part.label end, "\n", color=:yellow)
+    if !isnothing(part.description)
+        printstyled(io, part.description, '\n', color=:yellow)
+    end
+    print(io, '\n')
+    for q in part.questions
+        show(io, m, q)
+        q === last(part.questions) || print(io, "\n")
+    end
+end
+
+function show(io::IO, m::MIME"text/org", s::Survey)
+    printstyled(io, "#+title: ", s.name, "\n", color=:magenta)
+    if !isnothing(s.description)
+        print(io, '\n', s.description, '\n')
+    end
+    print(io, '\n')
+    parts = [s[p] for p in 1:length(s)]
+    for part in parts
+        show(io, m, part)
+        part === last(parts) || print(io, '\n')
+    end
+end
+
 end
