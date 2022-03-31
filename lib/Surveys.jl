@@ -96,7 +96,7 @@ function Question(id::Symbol, prompt::AbstractString, field::FormField;
         vcat(nonempty, validators)
     else
         vcat(validators)
-    end
+    end |> Vector{Function}
     Question(id, prompt, field, fullvalidators, postprocessors)
 end
 
