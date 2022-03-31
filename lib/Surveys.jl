@@ -133,6 +133,7 @@ end
 
 struct SurveyPart
     label::Union{AbstractString, Nothing}
+    description::Union{AbstractString, Nothing}
     questions::Vector{Question}
 end
 
@@ -141,9 +142,12 @@ Base.getindex(p::SurveyPart, index::Integer) = p.questions[index]
 
 Base.length(p::SurveyPart) = length(p.questions)
 
+SurveyPart(label::Union{AbstractString, Nothing}, description::Union{AbstractString, Nothing}, questions::Question...) =
+    SurveyPart(label, description, questions |> collect)
 SurveyPart(label::Union{AbstractString, Nothing}, questions::Question...) =
-    SurveyPart(label, questions |> collect)
-SurveyPart(questions::Question...) = SurveyPart(nothing, questions |> collect)
+    SurveyPart(label, nothing, questions |> collect)
+SurveyPart(questions::Question...) =
+    SurveyPart(nothing, nothing, questions |> collect)
 
 # Survey
 
@@ -153,11 +157,11 @@ struct Survey
     id::SurveyID
     name::AbstractString
     description::Union{AbstractString, Nothing}
-    parts::Vector{Pair{Union{AbstractString, Nothing}, Vector{Symbol}}}
+    parts::Vector{Pair{Tuple{Union{AbstractString, Nothing}, Union{AbstractString, Nothing}}, Vector{Symbol}}}
     questions::Dict{Symbol, Question}
     function Survey(name::AbstractString,
         description::Union{AbstractString, Nothing},
-        parts::Vector{<:Pair{<:Union{<:AbstractString, Nothing}, <:Vector{Symbol}}},
+        parts::Vector{<:Pair{<:Any, <:Vector{Symbol}}},
         questions::Dict{Symbol, Question})
         # Create an id that only depends on:
         # 1. Question IDs
@@ -171,13 +175,14 @@ struct Survey
         end
         id = xor(map(qhash, values(questions))...) |>
              h -> xor(reinterpret(SurveyID, [h])...)
-        new(id, name, description, parts, questions)
+        typedparts = parts |> Vector{Pair{Tuple{Union{AbstractString, Nothing}, Union{AbstractString, Nothing}}, Vector{Symbol}}}
+        new(id, name, description, typedparts, questions)
     end
 end
 
 Base.getindex(s::Survey, id::Symbol) = s.questions[id]
 Base.getindex(s::Survey, part::Integer) =
-    SurveyPart(s.parts[part].first,
+    SurveyPart(s.parts[part].first[1], s.parts[part].first[2],
                getindex.(Ref(s.questions), s.parts[part].second))
 
 Base.length(s::Survey) = length(s.parts)
@@ -186,7 +191,9 @@ Survey(name::AbstractString,
        description::Union{AbstractString, Nothing},
        parts::SurveyPart...) =
            Survey(name, description,
-                  map(p -> p.label => getfield.(p.questions, :id), parts) |> collect,
+                  map(parts) do p
+                      (p.label, p.description) => getfield.(p.questions, :id)
+                  end |> collect,
                   Dict(q.id => q for q in
                            Iterators.flatten(getfield.(parts, :questions))))
 Survey(name::AbstractString, parts::SurveyPart...) =
@@ -690,6 +697,9 @@ function show(io::IO, m::MIME"text/plain", part::SurveyPart)
     printstyled(io, "  -- ", if isnothing(part.label)
                     "Unlabeled part"
                 else part.label end, " --\n", color=:yellow)
+    if !isnothing(part.description)
+        printstyled(io, "  ", part.description, '\n', color=:yellow)
+    end
     for q in part.questions
         show(io, m, q)
         q === last(part.questions) || print(io, "\n")
