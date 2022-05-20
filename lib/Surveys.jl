@@ -770,6 +770,11 @@ function show(io::IO, ::MIME"text/org", q::Question{T}) where {T}
     end
 end
 
+function show(io::IO, ::MIME"text/org", (q, a)::Pair{<:Question, <:Answer})
+    printstyled(io, "- ", q.prompt, " :: ", color=:blue)
+    println(io, join(split(string(a.value), '\n'), "\n  "))
+end
+
 function show(io::IO, m::MIME"text/org", part::SurveyPart)
     printstyled(io, "* ", if isnothing(part.label)
                     "Unlabeled part"
@@ -780,7 +785,16 @@ function show(io::IO, m::MIME"text/org", part::SurveyPart)
     print(io, '\n')
     for q in part.questions
         show(io, m, q)
-        q === last(part.questions) || print(io, "\n")
+    end
+end
+
+function show(io::IO, m::MIME"text/org", (part, response)::Pair{SurveyPart, Response})
+    printstyled(io, "* ", if isnothing(part.label)
+                    "Unlabeled part"
+                else part.label end, "\n\n", color=:yellow)
+    foreach(part.questions) do q
+        show(io, m, q => response[q.id])
+        last(part.questions) === q || print(io, '\n')
     end
 end
 
@@ -794,6 +808,15 @@ function show(io::IO, m::MIME"text/org", s::Survey)
     for part in parts
         show(io, m, part)
         part === last(parts) || print(io, '\n')
+    end
+end
+
+function show(io::IO, m::MIME"text/org", (s, response)::Pair{Survey, Response})
+    printstyled(io, "#+title: ", s.name, "\n\n", color=:magenta)
+    parts = [s[p] for p in 1:length(s)]
+    for part in parts
+        show(io, m, part => response)
+        part === last(parts) || print(io, "\n\n")
     end
 end
 
