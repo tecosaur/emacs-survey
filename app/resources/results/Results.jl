@@ -92,6 +92,11 @@ end
 
 function results(survey::SurveyID; cache::Bool=true, format::Symbol=:DataFrame)
     resids = responseids(survey; cache)
+    results(survey, resids; cache, format)
+end
+
+function results(survey::SurveyID, resids::Vector{ResponseID};
+                 cache::Bool=true, format::Symbol=:DataFrame)
     res = response.(survey, resids; cache)
     qids = keys(questions(survey; cache))
     data = Dict(q => map(r -> r[q].value, res) for q in qids)
