@@ -41,8 +41,15 @@ function new()
 end
 
 function completed(uid)
+    uidstr = string(uid, base=UID_ENCBASE)
+    links = map(["txt", "org", "json"]) do fmt
+        (fmt, linkto(:result,
+                     survey = string(SURVEY.id, base=10),
+                     responsefile = string(uidstr, '.', fmt),
+                     preserve_query = false))
+    end
     res = html(:surveys, :thanks, layout=:base;
-               uid=string(uid, base=UID_ENCBASE), survey=SURVEY)
+               uid=uidstr, survey=SURVEY, resultlinks=links)
     Genie.Cookies.set!(res, "response-id", "", Dict{String, Any}("maxage" => -1))
     Genie.Cookies.set!(res, "response-page", 0, Dict{String, Any}("maxage" => -1))
 end

@@ -11,6 +11,11 @@
 <main>
     <h2 style="color: var(--primary)"><em>Thank you</em> for taking part in the survey!</h2>
     <h5>We hope to see you next year 🙂</h5>
-    <br /><br />
+    <p>You can view your results as
+    <% map(resultlinks) do (fmt, url) %>
+        <a href="$(url)">$(fmt)</a>
+    <% end |> l -> join(l, ", ", ", or ")%>
+    .</p>
+    <br />
     <a href="/" role="button">Go Home</a>
 </main>
