@@ -639,8 +639,7 @@ function htmlrender(q::Question, a::Answer)
 end
 
 show(io::IO, ::MIME"text/html", q::Question) = print(io, htmlrender(q, missing), '\n')
-function show(io::IO, ::MIME"text/html", qa::Pair{<:Question, <:Answer})
-    q, a = qa
+function show(io::IO, ::MIME"text/html", (q, a)::Pair{<:Question, <:Answer})
     print(io, htmlrender(q, a), '\n')
 end
 
@@ -651,8 +650,7 @@ function Base.show(io::IO, m::MIME"text/html", part::SurveyPart)
     end
 end
 
-function show(io::IO, m::MIME"text/html", pr::Pair{SurveyPart, Response})
-    part, response = pr
+function show(io::IO, m::MIME"text/html", (part, response)::Pair{SurveyPart, Response})
     foreach(part.questions) do q
         show(io, m, q => response[q.id])
         q === last(part.questions) || print(io, br(), '\n')
@@ -685,8 +683,7 @@ function show(io::IO, ::MIME"text/plain", a::Answer)
     end
 end
 
-function show(io::IO, m::MIME"text/plain", qa::Pair{<:Question, <:Answer})
-    q, a = qa
+function show(io::IO, m::MIME"text/plain", (q, a)::Pair{<:Question, <:Answer})
     show(io, m, q)
     print(io, '\n')
     show(io, m, a)
@@ -706,8 +703,7 @@ function show(io::IO, m::MIME"text/plain", part::SurveyPart)
     end
 end
 
-function show(io::IO, m::MIME"text/plain", pr::Pair{SurveyPart, Response})
-    part, response = pr
+function show(io::IO, m::MIME"text/plain", (part, response)::Pair{SurveyPart, Response})
     printstyled(io, "  -- ", if isnothing(part.label)
                     "Unlabeled part"
                 else part.label end, " --\n", color=:yellow)
@@ -727,8 +723,7 @@ function show(io::IO, m::MIME"text/plain", s::Survey)
     end
 end
 
-function show(io::IO, m::MIME"text/plain", sr::Pair{Survey, Response})
-    s, response = sr
+function show(io::IO, m::MIME"text/plain", (s, response)::Pair{Survey, Response})
     printstyled(io, "  ", s.name, "\n\n", color=:magenta)
     parts = [s[p] for p in 1:length(s)]
     for part in parts
