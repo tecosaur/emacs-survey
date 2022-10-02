@@ -263,7 +263,7 @@ the questions you see now will not neccesarily be in the final survey.",
         Dropdown(:respondant_nationality,
             "What is your nationality?",
             # taken from https://www.gov.uk/government/publications/nationalities/list-of-nationalities
-            ["Afghan", "Albanian", "Algerian", "American", "Andorran", "Angolan", "Anguillan", "Antigua and Barbuda",
+            ["(other)", "Afghan", "Albanian", "Algerian", "American", "Andorran", "Angolan", "Anguillan", "Antigua and Barbuda",
              "Argentine", "Armenian", "Australian", "Austrian", "Azerbaijani", "Bahamian", "Bahraini", "Bangladeshi",
              "Barbadian", "Belarusian", "Belgian", "Belizean", "Beninese", "Bermudian", "Bhutanese", "Bolivian",
              "Bosnia and Herzegovina", "Botswanan", "Brazilian", "British", "British Virgin Islander", "Bruneian",
