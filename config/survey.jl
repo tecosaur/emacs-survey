@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
 Survey(
     "Emacs User Survey — 2022",
     "Help the community have a better understanding of itself and its
