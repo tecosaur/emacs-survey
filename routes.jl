@@ -1,7 +1,7 @@
 using Genie.Router, Genie.Requests, Genie.Renderers.Html
 
-using SurveysController
-using ResultsController
+using ..Main.UserApp.SurveysController
+using ..Main.UserApp.ResultsController
 
 route("/") do
     SurveysController.index()
@@ -27,7 +27,14 @@ route("/results/:survey#([A-Za-z0-9]+)",
     ResultsController.resultsindex(surveyid)
 end
 
-route("/results/:survey#([A-Za-z0-9]+)\\.:format#([a-z]+)",
+route("/results/:surveyandformat#([A-Za-z0-9]+\\.[a-z]+)") do
+    @info "" payload(:surveyandformat)
+    survey, format = match(r"([A-Za-z0-9]+)\.([a-z]+)", payload(:surveyandformat)).captures
+    surveyid = tryparse(SurveysController.SurveyID, survey, base=10)
+    ResultsController.resultsfile(surveyid, format)
+end
+
+route("/results/:survey#([A-Za-z0-9]+)/:format#([a-z]+)",
       named = :surveyresult) do
     surveyid = tryparse(SurveysController.SurveyID, payload(:survey), base=10)
     ResultsController.resultsfile(surveyid, payload(:format))

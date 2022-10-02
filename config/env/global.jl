@@ -1,3 +1,2 @@
 # Place here configuration options that will be set for all environments
-
-ENV["HOST"] = ""
+# ENV["GENIE_ENV"] = "prod"

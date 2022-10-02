@@ -1,16 +1,5 @@
 env: ENV["GENIE_ENV"]
 
 dev:
-  adapter: SQLite
+  adapter:  SQLite
   database: db/results.sqlite
-  config:
-
-prod:
-  adapter:
-  database:
-  config:
-
-test:
-  adapter:
-  database:
-  config:

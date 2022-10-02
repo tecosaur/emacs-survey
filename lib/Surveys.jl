@@ -820,4 +820,7 @@ function show(io::IO, m::MIME"text/org", (s, response)::Pair{Survey, Response})
     end
 end
 
+current_survey::Union{Survey, Nothing} = nothing
+set_current_survey!(s::Survey) = global current_survey = s
+
 end

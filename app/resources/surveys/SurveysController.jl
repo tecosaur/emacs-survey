@@ -2,7 +2,7 @@ module SurveysController
 
 using Genie.Router, Genie.Requests, Genie.Renderers.Html, HTTP
 
-using Results, Surveys, Dates
+using ..Main.UserApp.Results, ..Main.UserApp.Surveys, Dates
 
 const SURVEY = include("../../../config/survey.jl")
 const INPROGRESS = Dict{Surveys.ResponseID, Surveys.Response}()
@@ -15,6 +15,7 @@ donesetup = false
 function setup()
     global donesetup
     if !donesetup
+        Surveys.set_current_survey!(SURVEY)
         register!(SURVEY)
         for rid in responseids(SURVEY.id, :incomplete)
             INPROGRESS[rid] = Results.response(SURVEY.id, rid)
@@ -50,8 +51,8 @@ function completed(uid)
     end
     res = html(:surveys, :thanks, layout=:base;
                uid=uidstr, survey=SURVEY, resultlinks=links)
-    Genie.Cookies.set!(res, "response-id", "", Dict{String, Any}("maxage" => -1))
     Genie.Cookies.set!(res, "response-page", 0, Dict{String, Any}("maxage" => -1))
+    Genie.Cookies.set!(res, "response-id", "", Dict{String, Any}("maxage" => -1))
 end
 
 function serve(forminfo::Dict)
@@ -88,10 +89,10 @@ function serve(forminfo::Dict)
             res = html(:surveys, :survey, layout=:base,
                        uid=uid_str, survey=SURVEY,
                        response=INPROGRESS[uid], page=page)
-            Genie.Cookies.set!(res, "response-id", uid_str,
+            Genie.Cookies.set!(res, "response-page", INPROGRESS[uid].page,
                                Dict{String, Any}("maxage" => RESUME_COOKIE_MAX_AGE,
                                                 "httponly" => true))
-            Genie.Cookies.set!(res, "response-page", INPROGRESS[uid].page,
+            Genie.Cookies.set!(res, "response-id", uid_str,
                                Dict{String, Any}("maxage" => RESUME_COOKIE_MAX_AGE,
                                                 "httponly" => true))
         end

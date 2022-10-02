@@ -1,7 +1,7 @@
 module Results
 
 using SearchLight
-using Surveys, Dates
+using ..Main.UserApp.Surveys, Dates
 using DataFrames, CSV, JSON3, SQLite
 
 export surveys, questions, responseids, results,
@@ -29,8 +29,8 @@ function questions(survey::SurveyID; cache::Bool=true)
     if !haskey(QUESTIONS, survey) || !cache
         qns = SearchLight.query("SELECT id, type, prompt, input FROM questions WHERE survey=$survey")
         qns.id = Symbol.(qns.id)
-        qns.type = Vector{Type}(@. eval(Meta.parse(qns.type)))
-        qns.input = Vector{Type}(@. eval(Meta.parse(qns.input)))
+        qns.type = Vector{Type}(@. Surveys.eval(Meta.parse(qns.type)))
+        qns.input = Vector{Type}(@. Surveys.eval(Meta.parse.(qns.input)))
         QUESTIONS[survey] = Dict(q.id => Dict(:type => q.type, :prompt => q.prompt, :input => q.input) for q in eachrow(qns))
     end
     QUESTIONS[survey]
@@ -100,6 +100,7 @@ function results(survey::SurveyID, resids::Vector{ResponseID};
     res = response.(survey, resids; cache)
     qids = keys(questions(survey; cache))
     data = Dict(q => map(r -> r[q].value, res) for q in qids)
+    @info "" DataFrame(data)
     DataFrame(data) |> if format == :DataFrame
         identity
     elseif format == :csv
@@ -113,7 +114,12 @@ function results(survey::SurveyID, resids::Vector{ResponseID};
                       for i in 1:size(df, 1)])
     elseif format == :sqlite
         df -> (mktemp() do path, io
-                   SQLite.load!(df, SQLite.DB(path), "results")
+                   df_plain = DataFrame()
+                   for (name, col) in zip(names(df), eachcol(df))
+                       df_plain[!, name] = if eltype(col) <: Union{Int, String}
+                           col else sprint.(print, col) end
+                   end
+                   SQLite.load!(df_plain, SQLite.DB(path), "results")
                    read(path)
                end)
     end
@@ -133,13 +139,14 @@ function register!(survey::Survey)
     if survey.id ∉ keys(surveys())
         name = if isnothing(survey.name) "NULL" else
             SearchLight.escape_value(survey.name) end
-        srepr = repr(survey) |> SearchLight.escape_value
+        srepr = repr(survey, context = :module => Surveys) |> SearchLight.escape_value
         SearchLight.query("INSERT INTO surveys (id, name, repr) VALUES ($(survey.id), $name, $srepr)")
         for (qid, q) in survey.questions
             qid_s = string(qid) |> SearchLight.escape_value
             prompt = q.prompt |> SearchLight.escape_value
             type = string(qvaltype(q)) |> SearchLight.escape_value
-            field = string(typeof(q.field)) |> SearchLight.escape_value
+            field = sprint(print, typeof(q.field), context = :module => Surveys) |> SearchLight.escape_value
+            field = sprint(print, typeof(q.field), context = :module => Surveys) |> SearchLight.escape_value
             SearchLight.query("INSERT INTO questions (survey, id, type, prompt, input) VALUES ($(survey.id), $qid_s, $type, $prompt, $field)")
         end
         SURVEYS[survey.id] = survey.name

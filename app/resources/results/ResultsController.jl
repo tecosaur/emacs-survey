@@ -2,7 +2,7 @@ module ResultsController
 
 using Genie, Genie.Renderer, Genie.Renderers.Html, HTTP, JSON3, StatsBase
 
-using Results, Surveys
+using ..Main.UserApp.Results, ..Main.UserApp.Surveys
 
 function resultsindex(survey::Union{SurveyID, Nothing}=nothing)
     if isnothing(survey)
@@ -34,8 +34,8 @@ function resultsfile(survey::SurveyID, format::AbstractString)
 end
 
 function resultsfile(survey::SurveyID, responseid::ResponseID, format::AbstractString)
-    @assert survey == Main.SurveysController.SURVEY.id
-    thesurvey = Main.SurveysController.SURVEY
+    thesurvey = Surveys.current_survey
+    @assert survey == thesurvey.id
     response = Results.response(survey, responseid)
     if format == "txt"
         WebRenderable(sprint(show, thesurvey => response), :text) |>
