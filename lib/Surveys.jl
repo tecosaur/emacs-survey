@@ -633,7 +633,7 @@ function htmlrender(q::Question, a::Answer)
     if isvalid(a)
         htmlrender(q, a.value, false)
     else
-        string(elem("small", a.error, :class => "formerror"),
+        string(elem("small", a.error, :class => "formerror", :id => "formerror"),
                htmlrender(q, a.value, string(!isnothing(a.error))))
     end
 end

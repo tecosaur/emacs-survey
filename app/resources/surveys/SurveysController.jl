@@ -137,7 +137,7 @@ function submit(forminfo::Dict; backpage::Bool=false)
             Genie.Renderer.redirect("/survey?uid=$uid_str&page=$(response.page)")
         else
             save!(response, SURVEY[page])
-            Genie.Renderer.redirect("/survey?uid=$uid_str&page=$page")
+            Genie.Renderer.redirect("/survey?uid=$uid_str&page=$page#formerror")
         end
     else
         io = IOBuffer()
