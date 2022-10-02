@@ -1,6 +1,6 @@
 name = "EmacsSurvey"
 uuid = "6786e42b-f0d7-4359-b26c-a0c9a9a4ccc8"
-authors = ["TEC <tec@tecosaur.com>"]
+authors = ["TEC <contact@tecosaur.net>"]
 version = "0.1.0"
 
 [deps]
