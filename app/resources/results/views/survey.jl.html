@@ -36,7 +36,7 @@
              if length(qres) > 0
                let qresexpanded=if qres[1] isa Vector; collect(Iterators.flatten(qres)) else qres end
                    qresfreq=sort(countmap(qresexpanded) |> collect, by=x->-x[2])
-                   maxfreq=qresfreq[1][2] %>
+                   maxfreq=if isempty(qresfreq) 0 else last(first(qresfreq)) end %>
         <svg viewBox="0 0 130 $(6*length(qresfreq))">
             <% [ %>
             <g class="bar">
