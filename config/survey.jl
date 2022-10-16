@@ -172,7 +172,7 @@ the questions you see now will not neccesarily be in the final survey.",
              "Yes, within the last 2 years" => "0-2y",
              "Yes, 2-5 years ago" => "2-5y",
              "Yes, 5-10 years ago" => "5-10y",
-             "Yes, 10+ years ago" => "10+y"])
+             "Yes, 10+ years ago" => "10+y"]),
         TextArea(:package_submission,
             "If you write packages, how you you decide which repositories to submit it to (if any)?",
             mandatory=false),
