@@ -80,11 +80,18 @@ function serve(forminfo::Dict)
         uid_str = string(uid, base=UID_ENCBASE)
         page = parse(Int, forminfo[:page])
         if page > length(SURVEY)
-            @info SURVEY => INPROGRESS[uid]
-            INPROGRESS[uid].completed = now()
-            save!(INPROGRESS[uid], Symbol[])
-            delete!(INPROGRESS, uid)
-            completed(uid)
+            # Verify the survey is /actually/ complete,
+            # and go to response's current page if not.
+            if INPROGRESS[uid].page > length(SURVEY)
+                @info SURVEY => INPROGRESS[uid]
+                INPROGRESS[uid].completed = now()
+                save!(INPROGRESS[uid], Symbol[])
+                delete!(INPROGRESS, uid)
+                completed(uid)
+            else
+                forminfo[:page] = string(INPROGRESS[uid].page)
+                serve(forminfo)
+            end
         else
             res = html(:surveys, :survey, layout=:base,
                        uid=uid_str, survey=SURVEY,
