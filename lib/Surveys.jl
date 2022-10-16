@@ -464,6 +464,18 @@ Dropdown(opts::Union{Vector{String}, Vector{Pair{String, String}}}) =
     Dropdown(Options(opts))
 Dropdown(gopts::Vector{Pair{String, Vector}}) =
     Dropdown([OptGroup(gopt) for gopt in gopts])
+Dropdown(opts::Vector{Any}) =
+    if Pair{String,String} in typeof.(opts)
+        opts = map(opts) do o
+            if o isa String
+                o => o
+            else
+                o
+            end
+        end |> Vector{Pair{String,String}} |> Dropdown
+    else
+        throw(ArgumentError("Expecected opts to be a Vector{Union{String, Pair{String, String}}}."))
+    end
 
 html_element(::Dropdown) = "select"
 function html_content(d::Dropdown{Options}, value)
