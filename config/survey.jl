@@ -25,13 +25,14 @@ the questions you see now will not necessarily be in the final survey.",
             "Which version(s) of Emacs do you use?",
             ["29 (master/HEAD)" => "29.0",
             "28.2", "28.1", "27.2", "27.1", "26.3", :other],
-            validators = v -> if isnothing(match(r"^\d+\.\d+$", v))
-                "Please give the MAJOR.MINOR version number as your response"
-            elseif parse(VersionNumber, v) < v"18"
-                "Ok, this is pushing the bounds of believability a bit much..."
-            elseif parse(VersionNumber, v) > v"29.0"
-                "You should have mentioned that you're a time traveller!"
-            end),
+            validators = vs -> for v in vs
+                    if isnothing(match(r"^\d+\.\d+$", v))
+                        return "Please give the MAJOR.MINOR version number as your response, not $v"
+                    elseif parse(VersionNumber, v) < v"18"
+                        return "Ok, Emacs $v is pushing the bounds of believability a bit much..."
+                    elseif parse(VersionNumber, v) > v"29.0"
+                        return "You should have mentioned that you're a time traveller using Emacs $(v)!"
+                    end end),
         MultiSelect(:emacs_motivations_current,
             "Which features keep you using Emacs?",
             ["Extensibility", "Package(s)", "Text editing features",
