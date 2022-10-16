@@ -1,6 +1,7 @@
 module SurveysController
 
 using Genie.Router, Genie.Requests, Genie.Renderers.Html, HTTP
+using Random # For shuffling donation links
 
 using ..Main.UserApp.Results, ..Main.UserApp.Surveys, Dates
 
@@ -50,7 +51,8 @@ function completed(uid)
                      preserve_query = false))
     end
     res = html(:surveys, :thanks, layout=:base;
-               uid=uidstr, survey=SURVEY, resultlinks=links)
+               uid=uidstr, survey=SURVEY, resultlinks=links,
+               donateitems=donationlinks())
     Genie.Cookies.set!(res, "response-page", 0, Dict{String, Any}("maxage" => -1))
     Genie.Cookies.set!(res, "response-id", "", Dict{String, Any}("maxage" => -1))
 end
@@ -172,6 +174,93 @@ function submit(forminfo::Dict; backpage::Bool=false)
         </html>
         """)
     end
+end
+
+const DONATION_INDIVIDUALS = [
+    ("https://liberapay.com/hlissner/",
+     "Henrik Lissner", "hlissner",
+     ["Doom Emacs" => "doomemacs/doomemacs", "assorted packages"]),
+    ("https://liberapay.com/magit/",
+     "Jonas Bernoulli", "tarsius",
+     ["Magit" => "magit", "Transient" => "transient", "others"]),
+    ("https://github.com/sponsors/abo-abo",
+     "Oleh Krehel", "abo-abo",
+     ["Swiper" => "swiper", "Hydra" => "hydra",
+      "Avy" => "avy", "Lispy" => "Lispy"]),
+    ("https://github.com/sponsors/progfolio",
+     "Nicholas Vollmer", "progfolio",
+     ["Straight" => "radian-software/straight.el",
+      "Elpaca" => "elpaca", "Doct" => "doct"]),
+    ("https://liberapay.com/protesilaos/",
+     "Protesilaos Stavrou", "protesilaos",
+     ["Modus themes" => "https://git.sr.ht/~protesilaos/modus-themes",
+      "Denote" => "https://git.sr.ht/~protesilaos/denote",
+      "others"]),
+    ("https://github.com/sponsors/yyoncho",
+     "Ivan Yonchovski", "yyoncho",
+     ["lsp-mode" => "emacs-lsp/lsp-mode", "dap-mode" => "emacs-lisp/dap-mode",
+      "and other LSP things"]),
+    ("https://liberapay.com/wasamasa/",
+     "Vasilij Schneidermann", "wasamasa",
+     ["nov.el" => "https://depp.brause.cc/nov.el/",
+      "circe" => "https://github.com/emacs-circe/circe",
+      "eyebrowse" => "https://depp.brause.cc/eyebrowse",
+      "shackle" => "https://depp.brause.cc/shackle"]),
+    ("https://liberapay.com/tec",
+     "me, Timothy", "tecosaur",
+     ["this survey", "a few other things"])
+]
+
+function donationlinks()
+    donate_org = ("https://liberapay.com/org-mode/",
+                  "The Org Project",
+                  "https://orgmode.org",
+                  ["org-mode" => "https://orgmode.org"])
+    donate_fsf = ("https://my.fsf.org/donate",
+                  "The Free Software Foundation",
+                  "https://www.fsf.org/",
+                  ["an assortment of projects"])
+    donate_specs = vcat(donate_org,
+                       shuffle(DONATION_INDIVIDUALS),
+                       donate_fsf)
+    donate_spec_to_link.(donate_specs)
+end
+
+function donate_spec_to_link((link, name, site, projects))
+    string("<li><a href=\"$link\"><b>Donate to</b></a> ",
+           name, ' ',
+           if isnothing(site)
+               ""
+           elseif occursin("http", site)
+               "<a href=\"$site\" target=\"_blank\" title=\"Homepage\" \
+                 style=\"color: var(--secondary); display: inline-block; \
+                         transform: scale(-1, 1)\">⎋</a>"
+           else # assume GitHub username
+               "<a href=\"https://github.com/$site\" target=\"_blank\" \
+                 style=\"color: var(--secondary)\" \
+                 title=\"GitHub profile\">@$site</a>"
+           end,
+           " (responsible for ",
+           join(map(projects) do proj
+                    if proj isa String
+                        proj
+                    elseif proj isa Pair{String,String}
+                        string("<a href=\"",
+                               if occursin("http", proj[2])
+                                   proj[2]
+                               elseif occursin("/", proj[2])
+                                   "https://github.com/$(proj[2])"
+                               elseif !isnothing(site)
+                                   "https://github.com/$site/$(proj[2])"
+                               end,
+                               "\" target=\"_blank\" title=\"Project page\" \
+                                style=\"color: var(--h1-color)\">",
+                               proj[1], "</a>")
+                    else
+                        ""
+                    end
+                end, ", ", ", and "),
+           ")</li>")
 end
 
 end
