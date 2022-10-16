@@ -8,14 +8,88 @@
     </hgroup>
 </header>
 
-<main>
+<main style="padding-top: 0">
     <h2 style="color: var(--primary)"><em>Thank you</em> for taking part in the survey!</h2>
     <h5>We hope to see you next year 🙂</h5>
     <p>You can view your results as
     <% map(resultlinks) do (fmt, url) %>
         <a href="$(url)">$(fmt)</a>
-    <% end |> l -> join(l, ", ", ", or ")%>
+    <% end |> l -> join(l, ", ", ", or ") %>
     .</p>
+    <br /> <hr />
+    <h4>Financially supporting the Emacs community</h4>
+    <p>If you are able to, financially supporting the Emacs community dignifies
+    the work they do and helps people find and justify the time they spend
+    improving the state of Emacs' ecosystem.</p>
+    <p>Should this sound like something you would be interested in, here
+    is a small selection of donation links that may be of interest.</p>
+    <ul>
+        <%
+        let donations = [
+            ("https://liberapay.com/org-mode/",
+             "The Org Project", nothing,
+             ["org-mode" => "https://orgmode.org"]),
+            ("https://liberapay.com/hlissner/",
+             "Henrik Lissner", "hlissner",
+             ["Doom Emacs" => "doomemacs/doomemacs", "assorted packages"]),
+            ("https://liberapay.com/magit/",
+             "Jonas Bernoulli", "tarsius",
+             ["Magit" => "magit", "Transient" => "transient", "others"]),
+            ("https://github.com/sponsors/abo-abo",
+             "Oleh Krehel", "abo-abo",
+             ["Swiper" => "swiper", "Hydra" => "hydra",
+              "Avy" => "avy", "Lispy" => "Lispy"]),
+            ("https://github.com/sponsors/progfolio",
+             "Nicholas Vollmer", "progfolio",
+             ["Straight" => "radian-software/straight.el",
+              "Elpaca" => "elpaca", "Doct" => "doct"]),
+            ("https://liberapay.com/protesilaos/",
+             "Protesilaos Stavrou", "protesilaos",
+             ["Modus themes" => "https://git.sr.ht/~protesilaos/modus-themes",
+              "Denote" => "https://git.sr.ht/~protesilaos/denote",
+              "others"]),
+            ("https://github.com/sponsors/yyoncho",
+             "Ivan Yonchovski", "yyoncho",
+             ["lsp-mode" => "emacs-lsp/lsp-mode", "dap-mode" => "emacs-lisp/dap-mode",
+              "and other LSP things"]),
+            ("https://liberapay.com/wasamasa/",
+             "Vasilij Schneidermann", "wasamasa",
+             ["nov.el" => "https://depp.brause.cc/nov.el/",
+              "circe" => "https://github.com/emacs-circe/circe",
+              "eyebrowse" => "https://depp.brause.cc/eyebrowse",
+              "shackle" => "https://depp.brause.cc/shackle"]),
+            ("https://my.fsf.org/donate",
+             "The Free Software Foundation", nothing,
+             ["an assortment of projects"]),
+            ];
+            map(donations) do (link, name, github, projects)
+                string("<li><a href=\"$link\"><b>Donate to</b></a> ",
+                    name, ' ',
+                    if !isnothing(github)
+                        "<a href=\"https://github.com/$github\" style=\"color: var(--secondary)\">@$github</a>"
+                    else "" end,
+                    " (responsible for ",
+                    join(map(projects) do proj
+                                if proj isa String
+                                    proj
+                                elseif proj isa Pair{String, String}
+                                    string("<a href=\"",
+                                        if occursin("http", proj[2])
+                                            proj[2]
+                                        elseif occursin("/", proj[2])
+                                            "https://github.com/$(proj[2])"
+                                        elseif !isnothing(github)
+                                            "https://github.com/$github/$(proj[2])"
+                                        end,
+                                        "\" style=\"color: var(--h1-color)\">",
+                                        proj[1], "</a>")
+                                else "" end
+                    end, ", ", ", and "),
+                    ")</li>")
+            end |> lines -> join(lines, '\n')
+        end
+        %>
+    </ul>
     <br />
     <a href="/" role="button">Go Home</a>
 </main>
