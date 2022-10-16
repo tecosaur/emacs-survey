@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: CC-BY-SA-4.0
 Survey(
-    "Emacs User Survey — 2022",
+    "Emacs User Survey — 2022 (Preview)",
     "Help the community have a better understanding of itself and its
         own diversity in Emacs usage. Discover and show how people are using
         this versatile tool for everything, from software engineering to
