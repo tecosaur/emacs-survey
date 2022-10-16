@@ -35,3 +35,7 @@ output {
     float: right;
     transform: translate(0em, calc(var(--spacing) * 0.15));
 }
+
+body > header {
+    padding-bottom: 0;
+}
