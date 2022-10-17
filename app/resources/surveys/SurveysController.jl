@@ -186,7 +186,7 @@ const DONATION_ENTITIES = [
     ("https://my.fsf.org/donate",
      "The Free Software Foundation",
      "https://www.fsf.org/",
-     "principle organisational sponsor of the GNU project"),
+     "principal organisational sponsor of the GNU project"),
     ("https://liberapay.com/org-mode/",
      "The Org Project",
      "https://orgmode.org",
