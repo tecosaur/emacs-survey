@@ -14,7 +14,7 @@ the questions you see now will not necessarily be in the final survey.",
         MultiSelect(:emacs_tasks,
             "Which of the following activities do you use Emacs for?",
             ["Work", "Hobby projects", :other]),
-        NumberInput(:emacs_years,
+        IntegerInput(:emacs_years,
             "How many years have you been using Emacs for?",
             validators = v -> if v < 0
                 "Seriously? Are we supposed to believe you're just planning ahead?"
@@ -258,7 +258,7 @@ the questions you see now will not necessarily be in the final survey.",
              "I would like to, but cannot" => "Cannot",
              :other])),
     SurveyPart("Demographics (all questions are optional)",
-        NumberInput(:respondent_age,
+        IntegerInput(:respondent_age,
             "How old are you?",
             validators = n -> if n < 8
                 "My, you're advanced for you're age. <i>Suspiciously</i> advanced…"
