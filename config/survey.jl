@@ -260,7 +260,8 @@ the questions you see now will not necessarily be in the final survey.",
     SurveyPart("Demographics (all questions are optional)",
         IntegerInput(:respondent_age,
             "How old are you?",
-            validators = n -> if n < 8
+            validators = n -> if ismissing(n) # This is fine, the question is optional.
+            elseif n < 8
                 "My, you're advanced for you're age. <i>Suspiciously</i> advanced…"
             elseif n > 99
                 "Congratulations on becoming a centenarian! How about you get one of your grandchildren to do this survey instead?"
