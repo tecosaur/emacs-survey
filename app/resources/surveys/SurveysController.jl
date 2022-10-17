@@ -34,10 +34,16 @@ function index()
 end
 
 function new()
+    function encrypted_xord_ip()
+        ip_str = get(Dict(payload()[:REQUEST].headers), "X-Forwarded-For", "0.0.0.0")
+        ip = parse.(UInt8, split(ip_str, '.'))
+        @info "client ip: $ip"
+        xor(reinterpret(UInt32, Genie.Encryption.encrypt(rand(UInt8, 4)) |> hex2bytes)...)
+    end
     r = Surveys.Response(SURVEY, vcat(responseids(SURVEY),
                                       Vector{Surveys.ResponseID}(keys(INPROGRESS) |> collect)))
     INPROGRESS[r.id] = r
-    register!(r)
+    register!(r, encrypted_xord_ip())
     uid_str = string(r.id, base=UID_ENCBASE)
     Genie.Renderer.redirect(HTTP.URIs.URI(currenturl()).path * "?uid=$uid_str&page=1")
 end

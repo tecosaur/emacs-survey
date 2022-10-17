@@ -25,6 +25,7 @@ function up()
         [
             column(:survey, :integer, not_null=true),
             column(:id, :integer, not_null=true),
+            column(:exip, :integer, not_null=true),
             column(:started, :text, not_null=true),
             column(:completed, :text),
             column(:page, :integer, not_null=true),

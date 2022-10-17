@@ -153,12 +153,15 @@ function register!(survey::Survey)
     end
 end
 
-function register!(response::Response; cache::Bool=true)
+function register!(response::Response, exip::Integer=0; cache::Bool=true)
     if response.survey ∉ keys(surveys(;cache))
         register!(response.survey)
     end
     @assert response.id ∉ responseids(response.survey; cache)
-    SearchLight.query("INSERT INTO responses (survey, id, started, page) VALUES ($(response.survey), $(response.id), '$(string(response.started))', $(response.page))")
+    SearchLight.query(
+        "INSERT INTO responses (survey, id, exip, started, page) \
+         VALUES ($(response.survey), $(response.id), $exip, \
+                 '$(string(response.started))', $(response.page))")
     for (qid, ans) in response.answers
         qid_s = SearchLight.escape_value(string(qid))
         value_s = SearchLight.escape_value(repr(ans.value))
