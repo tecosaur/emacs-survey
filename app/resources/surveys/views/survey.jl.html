@@ -32,7 +32,7 @@
     <h2>$(survey[page].label)</h2>
     <% end %>
     <% if !isnothing(survey[page].description) %>
-    <p>$(survey[page].description)</p>
+    <h6>$(survey[page].description)</h6>
     <% end %>
     <form method="POST" action="/submit" enctype="application/x-www-form-urlencoded" novalidate>
         <section>
