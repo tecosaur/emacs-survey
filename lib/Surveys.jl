@@ -257,12 +257,21 @@ function Response(s::Survey, oldids::Vector{ResponseID})
 end
 
 interpret(::FormField{<:AbstractString}, value::AbstractString) = value
-interpret(::FormField{Integer}, value::AbstractString) = parse(Int64, value)
+interpret(::FormField{Integer}, value::AbstractString) =
+    if isempty(value)
+        missing
+    else
+        something(tryparse(Int64, value), value)
+    end
 default_validators(::FormField{Integer}) = function(unparseable::String)
     "Integer required. \"$unparseable\" could not be parsed as an integer."
 end
 interpret(::FormField{Number}, value::AbstractString) =
-    something(tryparse(Int64, value), parse(Float64, value))
+    if isempty(value)
+        missing
+    else
+        something(tryparse(Int64, value), tryparse(Float64, value), value)
+    end
 default_validators(::FormField{Number}) = function(unparseable::String)
     "Number required. \"$unparseable\" could not be parsed as a number."
 end
