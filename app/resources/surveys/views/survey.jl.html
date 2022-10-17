@@ -50,11 +50,13 @@
         <% end %>
         <hr /> <br />
         <input type="hidden" name="debug" value="no" />
+        <% if ENV["GENIE_ENV"] == "dev" %>
         <small>
             <label for="qn-debug">
                 <input type="checkbox" id="qn-debug" name="debug" role="switch" value="yes">
                 Debug
             </label>
         </small>
+        <% else "" end %>
     </form>
 </main>
