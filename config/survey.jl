@@ -1,15 +1,12 @@
 # SPDX-License-Identifier: CC-BY-SA-4.0
 Survey(
-    "Emacs User Survey — 2022 (Preview)",
+    "Emacs User Survey — 2022 (Pre-release)",
     "Help the community have a better understanding of itself and its
         own diversity in Emacs usage. Discover and show how people are using
         this versatile tool for everything, from software engineering to
         academia and journalism.
 <br/><br/>
-This takes most people ?–? minutes to complete.
-<br/><br/>
-<b>Disclaimer:</b> This is currently just a draft based on the 2020 survey,
-the questions you see now will not necessarily be in the final survey.",
+This takes most people 5–15 minutes to complete.",
     SurveyPart("Emacs Usage",
         MultiSelect(:emacs_tasks,
             "Which of the following activities do you use Emacs for?",
