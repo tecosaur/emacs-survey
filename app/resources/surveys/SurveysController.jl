@@ -182,7 +182,15 @@ function submit(forminfo::Dict; backpage::Bool=false)
     end
 end
 
-const DONATION_INDIVIDUALS = [
+const DONATION_ENTITIES = [
+    ("https://my.fsf.org/donate",
+     "The Free Software Foundation",
+     "https://www.fsf.org/",
+     "principle organisational sponsor of the GNU project"),
+    ("https://liberapay.com/org-mode/",
+     "The Org Project",
+     "https://orgmode.org",
+     ["org-mode" => "https://orgmode.org"]),
     ("https://liberapay.com/hlissner/",
      "Henrik Lissner", "hlissner",
      ["Doom Emacs" => "doomemacs/doomemacs", "assorted packages"]),
@@ -217,20 +225,7 @@ const DONATION_INDIVIDUALS = [
      ["this survey", "a few other things"])
 ]
 
-function donationlinks()
-    donate_org = ("https://liberapay.com/org-mode/",
-                  "The Org Project",
-                  "https://orgmode.org",
-                  ["org-mode" => "https://orgmode.org"])
-    donate_fsf = ("https://my.fsf.org/donate",
-                  "The Free Software Foundation",
-                  "https://www.fsf.org/",
-                  ["an assortment of projects"])
-    donate_specs = vcat(donate_org,
-                       shuffle(DONATION_INDIVIDUALS),
-                       donate_fsf)
-    donate_spec_to_link.(donate_specs)
-end
+donationlinks() = donate_spec_to_link.(shuffle(DONATION_ENTITIES))
 
 function donate_spec_to_link((link, name, site, projects))
     string("<li><a href=\"$link\"><b>Donate to</b></a> ",
@@ -246,26 +241,30 @@ function donate_spec_to_link((link, name, site, projects))
                  style=\"color: var(--secondary)\" \
                  title=\"GitHub profile\">@$site</a>"
            end,
-           " (responsible for ",
-           join(map(projects) do proj
-                    if proj isa String
-                        proj
-                    elseif proj isa Pair{String,String}
-                        string("<a href=\"",
-                               if occursin("http", proj[2])
-                                   proj[2]
-                               elseif occursin("/", proj[2])
-                                   "https://github.com/$(proj[2])"
-                               elseif !isnothing(site)
-                                   "https://github.com/$site/$(proj[2])"
-                               end,
-                               "\" target=\"_blank\" title=\"Project page\" \
-                                style=\"color: var(--h1-color)\">",
-                               proj[1], "</a>")
-                    else
-                        ""
-                    end
-                end, ", ", ", and "),
+           if projects isa String
+               " ($projects"
+           else
+               " (responsible for " *
+               join(map(projects) do proj
+                        if proj isa String
+                            proj
+                        elseif proj isa Pair{String,String}
+                            string("<a href=\"",
+                                if occursin("http", proj[2])
+                                    proj[2]
+                                elseif occursin("/", proj[2])
+                                    "https://github.com/$(proj[2])"
+                                elseif !isnothing(site)
+                                    "https://github.com/$site/$(proj[2])"
+                                end,
+                                "\" target=\"_blank\" title=\"project page\" \
+                                    style=\"color: var(--h1-color)\">",
+                                proj[1], "</a>")
+                        else
+                            ""
+                        end
+                    end, ", ", ", and ")
+           end,
            ")</li>")
 end
 
