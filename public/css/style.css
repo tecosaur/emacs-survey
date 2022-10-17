@@ -150,9 +150,9 @@ kbd {
   --h6-color: #4d606d;
   --muted-color: #73828c;
   --muted-border-color: #edf0f3;
-  --primary: #624195;
+  --primary: #7F5AB6;
   --primary-hover: #4f3774;
-  --primary-focus: rgba(98, 65, 149, 0.125);
+  --primary-focus: rgba(127, 90, 182, 0.125);
   --primary-inverse: #fff;
   --secondary: #596b78;
   --secondary-hover: #415462;
@@ -239,9 +239,9 @@ kbd {
     --h6-color: #aebbc3;
     --muted-color: #73828c;
     --muted-border-color: #1f2d38;
-    --primary: #624195;
-    --primary-hover: #7F5AB6;
-    --primary-focus: rgba(98, 65, 149, 0.25);
+    --primary: #7F5AB6;
+    --primary-hover: #624195;
+    --primary-focus: rgba(127, 90, 182, 0.25);
     --primary-inverse: #fff;
     --secondary: #596b78;
     --secondary-hover: #73828c;
@@ -328,9 +328,9 @@ kbd {
   --h6-color: #aebbc3;
   --muted-color: #73828c;
   --muted-border-color: #1f2d38;
-  --primary: #624195;
-  --primary-hover: #7F5AB6;
-  --primary-focus: rgba(98, 65, 149, 0.25);
+  --primary: #7F5AB6;
+  --primary-hover: #624195;
+  --primary-focus: rgba(127, 90, 182, 0.25);
   --primary-inverse: #fff;
   --secondary: #596b78;
   --secondary-hover: #73828c;
