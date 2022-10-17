@@ -17,7 +17,7 @@ const RESPONSES = Dict{SurveyID, Dict{ResponseID, Union{Response, Nothing}}}()
 
 function surveys(;cache::Bool=true)
     if !cache || isempty(SURVEYS)
-        foreach(SearchLight.query("SELECT * from surveys") |> eachrow) do s
+        foreach(SearchLight.query("SELECT * FROM surveys") |> eachrow) do s
             SURVEYS[SurveyID(s.id)] = s.name
         end
     end
@@ -27,7 +27,8 @@ surveys(id::SurveyID; cache::Bool=true) = surveys(;cache)[id]
 
 function questions(survey::SurveyID; cache::Bool=true)
     if !haskey(QUESTIONS, survey) || !cache
-        qns = SearchLight.query("SELECT id, type, prompt, input FROM questions WHERE survey=$survey")
+        qns = SearchLight.query(
+            "SELECT id, type, prompt, input FROM questions WHERE survey=$survey")
         qns.id = Symbol.(qns.id)
         qns.type = Vector{Type}(@. Surveys.eval(Meta.parse(qns.type)))
         qns.input = Vector{Type}(@. Surveys.eval(Meta.parse.(qns.input)))
@@ -38,7 +39,8 @@ end
 
 function responseids(survey::SurveyID; cache::Bool=true)
     if !haskey(RESPONSES, survey) || !cache
-        ids = SearchLight.query("SELECT DISTINCT response FROM results WHERE survey=$survey") |>
+        ids = SearchLight.query(
+            "SELECT DISTINCT response FROM results WHERE survey=$survey") |>
             r -> ResponseID.(r.response)
         if !haskey(RESPONSES, survey)
             RESPONSES[survey] =
@@ -58,10 +60,12 @@ function responseids(survey::SurveyID, type::Symbol; cache::Bool=true)
     if type == :all
         responseids(surveyid; cache)
     elseif type == :complete
-        SearchLight.query("SELECT id FROM responses WHERE survey=$survey AND completed IS NOT NULL") |>
+        SearchLight.query("SELECT id FROM responses \
+                           WHERE survey=$survey AND completed IS NOT NULL") |>
             r -> ResponseID.(r.id)
     elseif type == :incomplete
-        SearchLight.query("SELECT id FROM responses WHERE survey=$survey AND completed IS NULL") |>
+        SearchLight.query("SELECT id FROM responses \
+                           WHERE survey=$survey AND completed IS NULL") |>
             r -> ResponseID.(r.id)
     end
 end
@@ -72,14 +76,18 @@ function response(survey::SurveyID, response::ResponseID; cache::Bool=true)
     end
     @assert response in responseids(survey; cache)
     if RESPONSES[survey][response] === nothing
-        responsedata = SearchLight.query("SELECT question, value FROM results WHERE survey=$survey AND response=$response")
+        responsedata = SearchLight.query(
+            "SELECT question, value FROM results \
+             WHERE survey=$survey AND response=$response")
         answers = Dict(map(eachrow(responsedata)) do ans
                            qid = Symbol(ans.question)
                            anstype = questions(survey)[qid][:type]
                            value = eval(Meta.parse(ans.value))
                            qid => Answer{anstype}(value, nothing)
                        end)
-        metadata = SearchLight.query("SELECT started, completed, page FROM responses WHERE survey=$survey AND id=$response")
+        metadata = SearchLight.query(
+            "SELECT started, completed, page \
+             FROM responses WHERE survey=$survey AND id=$response")
         started = parse(DateTime, metadata.started[1])
         completed = if !ismissing(metadata.completed[1])
             parse(DateTime, metadata.completed[1]) end
@@ -140,14 +148,17 @@ function register!(survey::Survey)
         name = if isnothing(survey.name) "NULL" else
             SearchLight.escape_value(survey.name) end
         srepr = repr(survey, context = :module => Surveys) |> SearchLight.escape_value
-        SearchLight.query("INSERT INTO surveys (id, name, repr) VALUES ($(survey.id), $name, $srepr)")
+        SearchLight.query("INSERT INTO surveys (id, name, repr) \
+                           VALUES ($(survey.id), $name, $srepr)")
         for (qid, q) in survey.questions
             qid_s = string(qid) |> SearchLight.escape_value
             prompt = q.prompt |> SearchLight.escape_value
             type = string(qvaltype(q)) |> SearchLight.escape_value
             field = sprint(print, typeof(q.field), context = :module => Surveys) |> SearchLight.escape_value
             field = sprint(print, typeof(q.field), context = :module => Surveys) |> SearchLight.escape_value
-            SearchLight.query("INSERT INTO questions (survey, id, type, prompt, input) VALUES ($(survey.id), $qid_s, $type, $prompt, $field)")
+            SearchLight.query(
+                "INSERT INTO questions (survey, id, type, prompt, input) \
+                 VALUES ($(survey.id), $qid_s, $type, $prompt, $field)")
         end
         SURVEYS[survey.id] = survey.name
     end
@@ -165,29 +176,38 @@ function register!(response::Response, exip::Integer=0; cache::Bool=true)
     for (qid, ans) in response.answers
         qid_s = SearchLight.escape_value(string(qid))
         value_s = SearchLight.escape_value(repr(ans.value))
-        SearchLight.query("INSERT INTO results (survey, response, question, value) VALUES ($(response.survey), $(response.id), $qid_s, $value_s)")
+        SearchLight.query(
+            "INSERT INTO results (survey, response, question, value) \
+             VALUES ($(response.survey), $(response.id), $qid_s, $value_s)")
     end
     RESPONSES[response.survey][response.id] = nothing
 end
 
 function deregister!(response::Response; cache::Bool=true)
     @assert response.id ∈ responseids(response.survey; cache)
-    SearchLight.query("DELETE FROM responses WHERE survey = $(response.survey) AND id = $(response.id)")
-    SearchLight.query("DELETE FROM results WHERE survey = $(response.survey) AND response = $(response.id)")
+    SearchLight.query("DELETE FROM responses WHERE \
+                       survey = $(response.survey) AND id = $(response.id)")
+    SearchLight.query("DELETE FROM results WHERE \
+                       survey = $(response.survey) AND response = $(response.id)")
     delete!(RESPONSES[response.survey], response.id)
 end
 
 function save!(response::Response, questionsids::Vector{Symbol}=keys(response.answers); cache::Bool=true)
     @assert response.id ∈ responseids(response.survey; cache)
     if !isnothing(response.completed)
-        SearchLight.query("UPDATE responses SET completed = '$(string(response.completed))' WHERE survey = $(response.survey) AND id = $(response.id)")
+        SearchLight.query(
+            "UPDATE responses SET completed = '$(string(response.completed))' \
+             WHERE survey = $(response.survey) AND id = $(response.id)")
     end
-    SearchLight.query("UPDATE responses SET page = $(response.page) WHERE survey = $(response.survey) AND id = $(response.id)")
+    SearchLight.query("UPDATE responses SET page = $(response.page) \
+                       WHERE survey = $(response.survey) AND id = $(response.id)")
     for qid in questionsids
         qid_s = SearchLight.escape_value(string(qid))
         ans = response.answers[qid]
         value_s = SearchLight.escape_value(repr(ans.value))
-        SearchLight.query("UPDATE results SET value = $value_s WHERE survey = $(response.survey) AND response = $(response.id) AND question = $qid_s")
+        SearchLight.query(
+            "UPDATE results SET value = $value_s WHERE survey = $(response.survey) \
+             AND response = $(response.id) AND question = $qid_s")
     end
 end
 
@@ -211,8 +231,12 @@ function clear!(survey::Survey)
 end
 
 function clear!(response::Response)
-    SearchLight.query("DELETE FROM responses WHERE survey = $(response.survey), id = $(response.id)")
-    SearchLight.query("DELETE FROM results WHERE survey = $(response.survey), response = $(response.id)")
+    SearchLight.query(
+        "DELETE FROM responses \
+         WHERE survey = $(response.survey), id = $(response.id)")
+    SearchLight.query(
+        "DELETE FROM results \
+         WHERE survey = $(response.survey), response = $(response.id)")
 end
 
 end
