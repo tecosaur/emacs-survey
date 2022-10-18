@@ -86,14 +86,15 @@ function response(survey::SurveyID, response::ResponseID; cache::Bool=true)
                            qid => Answer{anstype}(value, nothing)
                        end)
         metadata = SearchLight.query(
-            "SELECT started, completed, page \
+            "SELECT exip, started, completed, page \
              FROM responses WHERE survey=$survey AND id=$response")
+        exip = UInt32(metadata.exip[1])
         started = parse(DateTime, metadata.started[1])
         completed = if !ismissing(metadata.completed[1])
             parse(DateTime, metadata.completed[1]) end
         RESPONSES[survey][response] =
-            Response(survey, response, metadata.page[1], answers,
-                     started, completed)
+            Response(survey, response, exip, metadata.page[1],
+                     answers, started, completed)
     end
     RESPONSES[survey][response]
 end

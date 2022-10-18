@@ -226,7 +226,8 @@ const ResponseID = UInt32
 mutable struct Response
     survey::SurveyID
     id::ResponseID
-    page::Integer
+    exip::UInt32
+    page::Int
     answers::Dict{Symbol, Answer}
     started::DateTime
     completed::Union{DateTime, Nothing}
@@ -242,18 +243,18 @@ Base.getindex(r::Response, id::Symbol) = r.answers[id]
 
 Answer(::Question{<:FormField{T}}) where {T} = Answer{T}(missing, nothing)
 
-Response(s::Survey, id::ResponseID=rand(ResponseID)) =
-    Response(s.id, id, 1,
+Response(s::Survey, id::ResponseID=rand(ResponseID); exip::UInt32=zero(UInt32)) =
+    Response(s.id, id, exip, 1,
              Dict(q.id => Answer(q) for q in
                       Iterators.flatten([s[i].questions for i in 1:length(s)])),
              now(), nothing)
 
-function Response(s::Survey, oldids::Vector{ResponseID})
+function Response(s::Survey, oldids::Vector{ResponseID}; exip::UInt32=zero(UInt32))
     newid = rand(ResponseID)
     while newid in oldids
         newid = rand(ResponseID)
     end
-    Response(s, newid)
+    Response(s, newid; exip)
 end
 
 interpret(::FormField{<:AbstractString}, value::AbstractString) = value

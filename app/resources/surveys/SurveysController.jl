@@ -40,10 +40,13 @@ function new()
         @info "client ip: $ip"
         xor(reinterpret(UInt32, Genie.Encryption.encrypt(rand(UInt8, 4)) |> hex2bytes)...)
     end
-    r = Surveys.Response(SURVEY, vcat(responseids(SURVEY),
-                                      Vector{Surveys.ResponseID}(keys(INPROGRESS) |> collect)))
+    exip = encrypted_xord_ip()
+    r = Surveys.Response(SURVEY,
+                         vcat(responseids(SURVEY),
+                              Vector{Surveys.ResponseID}(keys(INPROGRESS) |> collect));
+                         exip)
     INPROGRESS[r.id] = r
-    register!(r, encrypted_xord_ip())
+    register!(r, exip)
     uid_str = string(r.id, base=UID_ENCBASE)
     Genie.Renderer.redirect(HTTP.URIs.URI(currenturl()).path * "?uid=$uid_str&page=1")
 end
