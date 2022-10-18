@@ -2,7 +2,7 @@ module Results
 
 using SearchLight
 using ..Main.UserApp.Surveys, Dates
-using DataFrames, CSV, JSON3, SQLite
+using DataFrames, CSV, JSON3, SQLite, JLD2
 
 export surveys, questions, responseids, results,
     register!, deregister!, save!, clear!
@@ -112,6 +112,17 @@ function results(survey::SurveyID, resids::Vector{ResponseID};
     @info "" DataFrame(data)
     DataFrame(data) |> if format == :DataFrame
         identity
+    elseif format == :jld2
+        df -> (mktemp() do path, _
+                   df.id = resids
+                   jldsave(path; results = select(df, :id, :),
+                           responses = map(res) do r
+                               (; id=r.id, exip=r.exip, started=r.started,
+                                completed=r.completed, r.page)
+                           end |> DataFrame,
+                           questions = questions(survey; cache))
+                   read(path)
+               end)
     elseif format == :csv
         df -> sprint(CSV.write, df)
     elseif format == :tsv

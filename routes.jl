@@ -27,20 +27,20 @@ route("/results/:survey#([A-Za-z0-9]+)",
     ResultsController.resultsindex(surveyid)
 end
 
-route("/results/:surveyandformat#([A-Za-z0-9]+\\.[a-z]+)") do
+route("/results/:surveyandformat#([A-Za-z0-9]+\\.[a-z0-9]+)") do
     @info "" payload(:surveyandformat)
-    survey, format = match(r"([A-Za-z0-9]+)\.([a-z]+)", payload(:surveyandformat)).captures
+    survey, format = match(r"([A-Za-z0-9]+)\.([a-z0-9]+)", payload(:surveyandformat)).captures
     surveyid = tryparse(SurveysController.SurveyID, survey, base=10)
     ResultsController.resultsfile(surveyid, format)
 end
 
-route("/results/:survey#([A-Za-z0-9]+)/:format#([a-z]+)",
+route("/results/:survey#([A-Za-z0-9]+)/:format#([a-z0-9]+)",
       named = :surveyresult) do
     surveyid = tryparse(SurveysController.SurveyID, payload(:survey), base=10)
     ResultsController.resultsfile(surveyid, payload(:format))
 end
 
-route("/results/:survey#([A-Za-z0-9]+)/:responsefile#([A-Za-z0-9]+\\.[a-z]+)",
+route("/results/:survey#([A-Za-z0-9]+)/:responsefile#([A-Za-z0-9]+\\.[a-z0-9]+)",
       named = :result) do
     surveyid = tryparse(SurveysController.SurveyID, payload(:survey), base=10)
     response, format = split(payload(:responsefile), '.')

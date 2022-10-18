@@ -28,6 +28,9 @@ function resultsfile(survey::SurveyID, format::AbstractString)
     elseif format == "db" || format == "sqlite"
         HTTP.Response(200, ["Content-Type" => "application/octet-stream"],
                       body = results(survey, format=:sqlite))
+    elseif format == "jld2"
+        HTTP.Response(200, ["Content-Type" => "application/x-hdf5"],
+                      body = results(survey, format=:jld2))
     else
         error("format $format not recognised")
     end
@@ -50,6 +53,9 @@ function resultsfile(survey::SurveyID, responseid::ResponseID, format::AbstractS
     elseif format == "db" || format == "sqlite"
         HTTP.Response(200, ["Content-Type" => "application/octet-stream"],
                       body = results(survey, [responseid], format=:sqlite))
+    elseif format == "jld2"
+        HTTP.Response(200, ["Content-Type" => "application/x-hdf5"],
+                      body = results(survey, [responseid], format=:jld2))
     else
         error("format $format not recognised")
     end
