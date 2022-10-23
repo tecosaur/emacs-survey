@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: CC-BY-SA-4.0
 Survey(
-    "Emacs User Survey — 2022 (Pre-release)",
+    "Emacs User Survey — 2022",
     "Help the community have a better understanding of itself and its
         own diversity in Emacs usage. Discover and show how people are using
         this versatile tool for everything, from software engineering to
         academia and journalism.
+<br/>
+You can read about the 2020 survey and results <a href=\"https://emacs-survey.netlify.app/\">here</a>.
 <br/><br/>
 This takes most people 5–15 minutes to complete.",
     SurveyPart("Emacs Usage",
