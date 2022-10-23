@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>FAQ | Emacs User Survey</title>
+        <meta name="description" content="">
+        <link href="/css/style.css" rel="stylesheet">
+    </head>
+    <body>
+        <header>
+            <hgroup>
+                <h1>Emacs User Survey</h1>
+                <h2>Frequently Asked Questions</h2>
+            </hgroup>
+        </header>
+        <main>
+            <p>During the 2020 survey, a lot of questions were raised.
+            Based on them, here's a preemptive FAQ for the 2022 survey.</p>
+
+            <hr />
+
+            <h3>What is the point of the survey?</h3>
+
+            <p>By the nature of the Emacs and its community, the only way
+            developers tend to get feedback on how Emacs or an Emacs package is
+            when somebody raises an issue with their experience or requests that
+            a feature be added. This provides a poor understanding of the
+            community's general experience and thoughts.</p>
+
+            <p>This survey essentially aims to bridge that gap, and in doing so
+            provide more information that Emacs maintainers and package
+            developers can use to guide their decisions.</p>
+
+            <h3>Who are you?</h3>
+
+            <p>Hi 👋, I'm <a href="https://liberapay.com/tec">Timothy</a>, and
+            I've been the driving force behind the 2022 Emacs User Survey.
+            <a href="https://github.com/abrochard">Adrien</a> did a fantastic
+            job with the 2020 survey, and I've worked with him to refine the
+            2020 questions and re-use the emacssurvey.org domain.</p>
+
+            <h3>How is the survey being conducted?</h3>
+
+            <p>To provide a smooth survey experience that satisfies the ethical and
+            technical requirements of a survey on a free/libre and open source
+            project, I ended up building
+            <a href="https://git.tecosaur.net/tec/emacs-survey">my own survey framework</a>.
+            It requires no JS, and does no tracking, beyond simply recording an
+            encrypted, xor'd form of respondant's IP addresses to enable the
+            detection of duplicate and/or suspicious responses.
+            You can see the set of questions used in the survey
+            <a href="https://git.tecosaur.net/tec/emacs-survey/src/branch/main/config/survey.jl">here</a>.</p>
+
+            <p>This survey framework has been deployed on a simple Debian 11 VM,
+            with the entire set up done by one short script, documented
+            <a href="https://git.tecosaur.net/tec/emacs-survey-server/src/branch/master/setup.org">here</a>.</p>
+
+            <h3>What happens with the data?</h3>
+
+            <p>The data collected in the first fortnight will be analysed and
+            presented at <a href="https://emacsconf.org/2022/talks/survey/">EmacsConf 2022</a>.
+            An analysis on the complete results will be made available online at
+            a later date (check back here after the survey closes).</p>
+
+            <p>The raw results themselves are available <em>live</em>, and can be
+            found on the <a href="/results">results page</a>. In addition to a
+            basic web view the results can also be downloaded in several formats,
+            though the <a href="https://github.com/JuliaIO/JLD2.jl">JLD2</a> data
+            will be the most detailed.</p>
+
+            <h3>How were the questions chosen?</h3>
+
+            <p>The 2020 questions were taken as a starting point, and then a
+            process of iterative refinement started. This involved a chat
+            between myself and Adrien, a
+            <a href="https://yhetil.org/emacs-devel/87ee0sb3by.fsf@gmail.com/">thread on emacs-devel</a>,
+            and the feedback of a lovely group of beta-testers (thanks everyone!).</p>
+
+            <p>It is safe to expect that the 2023 survey questions will undergo a
+            similar process.</p>
+
+            <h3>Why didn't you ask about&mldr;</h3>
+
+            <p>In this survey I am specifically trying to maximise the value
+            provided by the results for the amount of respondents time taken up
+            by the survey. As such, while there are hundreds of potentially
+            interesting questions, this survey tries to focus on the most
+            impactive ones.</p>
+
+            <p>That said, there are likely some very good questions that haven't
+            been considered. If you think you have a good idea, don't hesitate
+            to get in touch 🙂.</p>
+
+            <h3>How about an Emacs package to respond?</h3>
+
+            <p>That's a fun idea! This year the focus has been on making the
+            web-experience better. In future a survey API could well be added,
+            on top of which an Emacs Survey package could be built.</p>
+
+            <p>Feel free to attempt this yourself if I take too long to get around
+            to it.</p>
+
+            <h3>How can I help out?</h3>
+
+            <p>There are three primary ways you can help out with this survey:
+            <ul>
+                <li>Sharing the survey with other Emacs users you know</li>
+                <li>Helping refine the question set</li>
+                <li>Improving the survey framework (or writing that Emacs package)</li>
+            </ul></p>
+
+            <h3>Where can I report an issue or make a suggestion?</h3>
+
+            <p>You can always send me an email (see the address listed on my
+            <a href="https://github.com/tecosaur/">GitHub profile</a>).</p>
+        </main>
+        <footer>
+            This work is licensed under a
+            <a rel="license" href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0 License</a>.
+        </footer>
+    </body>
+</html>
