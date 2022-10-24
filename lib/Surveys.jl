@@ -1,6 +1,7 @@
 module Surveys
 
 using Dates
+using Base64
 using Genie.Renderers.Html
 import Base: show, isvalid, isempty
 
@@ -574,13 +575,13 @@ function htmlrender(q::Union{<:Question{RadioSelect}, Question{MultiSelect}},
                 if nonempty in q.validators "true" else false end),
         '\n',
         join(map(q.field.options.options |> enumerate) do (i, opt)
-                id = string("qn-", q.id, "-", replace(opt.second, r"[^A-Za-z0-9]+" => '-'))
+                id = string("qn-", q.id, "-", base64encode(opt.second))
                 elem("label",
                     elem("input", :type => type, :id => id,
                         :name => string(q.id, "[]"), :value => html_escape(opt.second),
                         :checked => (!ismissing(value) && opt.second ∈ value),
                         if type == "radio" && q.field.other
-                            [:oninput => "document.getElementById('$(string("qn-", q.id, "---other-input"))').value = ''"]
+                            [:oninput => "document.getElementById('$(string("qn-", q.id, "--other-input"))').value = ''"]
                         else [] end...) *
                     opt.first,
                     :for => id)
@@ -598,10 +599,10 @@ function htmlrender(q::Union{<:Question{RadioSelect}, Question{MultiSelect}},
                         :id => string("qn-", q.id, "--other"), :value => "",
                         :checked => length(othervals) > 0,
                          if type == "checkbox"
-                            [:oninput => "if (!this.checked) { document.getElementById('$(string("qn-", q.id, "---other-input"))').value = '' }"]
+                            [:oninput => "if (!this.checked) { document.getElementById('$(string("qn-", q.id, "--other-input"))').value = '' }"]
                          else [] end...),
                     elem("input", :type => "text",
-                        :id => string("qn-", q.id, "---other-input"),
+                        :id => string("qn-", q.id, "--other-input"),
                         :class => "other", :placeholder => "Other",
                         :name => string(q.id, "[]"), :value => html_escape(join(othervals, ", ")),
                         :oninput => "document.getElementById('$(string("qn-", q.id, "--other"))').checked = this.value.length > 0"
