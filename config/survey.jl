@@ -40,7 +40,7 @@ This takes most people 5–15 minutes to complete.",
              :other],
             mandatory=false),
         MultiSelect(:operating_system,
-            "Which operating system to you use Emacs on?",
+            "Which operating system do you use Emacs on?",
             ["GNU/Linux",
              "Linux via <abbr title=\"Windows Subsystem for Linux\">WSL</abbr>" => "WSL",
              "Windows", "MacOS", "BSD", :other]),
@@ -270,7 +270,7 @@ This takes most people 5–15 minutes to complete.",
             "How old are you?",
             validators = n -> if ismissing(n) # This is fine, the question is optional.
             elseif n < 8
-                "My, you're advanced for you're age. <i>Suspiciously</i> advanced…"
+                "My, you're advanced for your age. <i>Suspiciously</i> advanced…"
             elseif n > 99
                 "Congratulations on becoming a centenarian! How about you get one of your grandchildren to do this survey instead?"
             end,
@@ -296,7 +296,7 @@ This takes most people 5–15 minutes to complete.",
              "Bosnia and Herzegovina", "Botswanan", "Brazilian", "British", "British Virgin Islander", "Bruneian",
              "Bulgarian", "Burkinan", "Burmese", "Burundian", "Cambodian", "Cameroonian", "Canadian", "Cape", "Verdean",
              "Cayman Islander", "Central", "African", "Chadian", "Chilean", "Chinese", "Colombian", "Comoran",
-             "Congolese (Congo)", "Congolese (DRC)", "Cook Islander", "Costa", "Rican", "Croatian", "Cuban", "Cymraes",
+             "Congolese (Congo)", "Congolese (DRC)", "Cook Islander", "Costa Rican", "Croatian", "Cuban", "Cymraes",
              "Cymro", "Cypriot", "Czech", "Danish", "Djiboutian", "Dominican", "Dominican Republic citizen", "Dutch",
              "East Timorese", "Ecuadorean", "Egyptian", "Emirati", "English", "Equatorial", "Guinean", "Eritrean", "Estonian",
              "Ethiopian", "Faroese", "Fijian", "Filipino", "Finnish", "French", "Gabonese", "Gambian", "Georgian",
